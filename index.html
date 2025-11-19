@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>竞品追踪周报 | 欧帝科技</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -13,368 +11,327 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     
     <style>
-        body { 
-            font-family: 'Noto Sans SC', system-ui, -apple-system, sans-serif; 
-            background-color: #f0f2f5; /* 浅灰背景，衬托毛玻璃 */
-            color: #334155; 
-            -webkit-font-smoothing: antialiased;
-            -webkit-tap-highlight-color: transparent;
-        }
+        body { font-family: 'Noto Sans SC', sans-serif; background-color: #f8fafc; color: #334155; }
         
-        /* 顶部导航毛玻璃 */
-        .glass-nav {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
-        }
-
-        /* 卡片通用样式 (无毛玻璃，白色背景更清晰) */
-        .card-base {
-            background: #ffffff;
-            border-radius: 1rem; /* 16px */
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            transition: all 0.3s ease;
-        }
-        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 15px 30px rgba(0,0,0,0.08); }
-
-        /* 区域容器毛玻璃 (用于包裹图表区和筛选区) */
-        .glass-wrapper {
-            background: rgba(255, 255, 255, 0.4);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            border-radius: 1.5rem;
-            padding: 1rem;
-        }
-
-        /* 下拉框样式 */
-        .custom-select-wrapper { position: relative; flex-shrink: 0; }
-        .custom-select {
-            appearance: none;
-            -webkit-appearance: none;
-            background-color: #ffffff;
-            border: 1px solid #e2e8f0;
-            padding: 8px 32px 8px 14px;
-            border-radius: 9999px;
+        /* 滚动条美化 */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        
+        /* 顶部导航品牌标签 */
+        .nav-brand-item {
+            padding: 0.5rem 1rem;
             font-size: 0.875rem;
             font-weight: 500;
-            color: #475569;
+            color: #64748b;
+            border-radius: 0.5rem;
             cursor: pointer;
-            transition: all 0.2s;
-            line-height: 1.5;
             white-space: nowrap;
+            transition: all 0.2s;
         }
-        .custom-select:hover { border-color: #cbd5e1; background-color: #f8fafc; }
-        .custom-select:focus { outline: none; border-color: #5470C6; box-shadow: 0 0 0 3px rgba(84, 112, 198, 0.1); }
+        .nav-brand-item:hover { background-color: #f1f5f9; color: #0f172a; }
+        .nav-brand-item.active { background-color: #ebf5ff; color: #2563eb; font-weight: 600; }
+
+        /* 左侧图表容器 */
+        .chart-card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            margin-bottom: 1rem;
+        }
+
+        /* 内容区卡片 (参考附图风格: 简约、左边框、高密度) */
+        .feed-card {
+            background: white;
+            border-radius: 0.5rem;
+            padding: 1.25rem;
+            border: 1px solid #e2e8f0;
+            border-left-width: 4px; /* 左侧色条 */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .feed-card:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); transform: translateY(-1px); }
+
+        /* 维度标签 */
+        .dim-tag { font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; font-weight: 600; background: #f1f5f9; color: #64748b; }
         
-        .select-arrow { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #94a3b8; }
-
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        .tag-base { font-size: 0.75rem; padding: 2px 8px; border-radius: 6px; font-weight: 600; letter-spacing: 0.02em; white-space: nowrap; }
-        /* 标签也配合新色系 */
-        .tag-strategy { background-color: #eefbfd; color: #5470C6; border: 1px solid #bfdbfe; } 
-        .tag-product { background-color: #f0fdf4; color: #91CC75; border: 1px solid #bbf7d0; } 
-        .tag-market { background-color: #fffcf0; color: #FAC858; border: 1px solid #fde68a; } 
-        .brand-badge { font-weight: 600; border-radius: 6px; padding: 3px 10px; font-size: 0.75rem; display: inline-flex; align-items: center; white-space: nowrap; }
-
-        #loading { position: fixed; inset: 0; background:#f8fafc; display:flex; justify-content:center; align-items:center; z-index:100; }
-        .loader { width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #5470C6; border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        /* 加载动画 */
+        #loading { position: fixed; inset: 0; background:white; z-index: 100; display: flex; justify-content: center; align-items: center; }
     </style>
 </head>
-<body class="antialiased pb-10">
+<body class="flex flex-col h-screen overflow-hidden">
 
-    <div id="loading">
-        <div class="flex flex-col items-center gap-3">
-            <div class="loader"></div>
-            <div class="text-slate-400 text-sm font-medium animate-pulse">Loading Data...</div>
+    <div id="loading"><div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div></div>
+
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center px-4 md:px-6 flex-shrink-0 z-30 shadow-sm relative">
+        <div class="flex items-center mr-8 flex-shrink-0">
+            <img src="./logo.png" alt="Logo" class="h-8 w-auto object-contain">
+            <div class="w-px h-6 bg-slate-200 mx-4 hidden md:block"></div>
+            <h1 class="text-lg font-bold text-slate-800 hidden md:block">竞品追踪中心</h1>
         </div>
-    </div>
 
-    <header class="glass-nav sticky top-0 z-50 w-full">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-3 sm:gap-4">
-                <img src="./logo.png" alt="欧帝科技" class="h-6 sm:h-7 w-auto object-contain opacity-95">
-                <div class="h-4 w-[1.5px] bg-slate-300 rotate-12 hidden sm:block"></div>
-                <div class="flex items-baseline gap-2 sm:gap-3">
-                    <h1 class="text-base sm:text-lg font-bold text-slate-800 tracking-tight">竞品追踪周报</h1>
-                    <span id="dateRange" class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white text-slate-500 border border-slate-200 shadow-sm">--/--</span>
-                </div>
+        <div class="flex-1 overflow-x-auto no-scrollbar flex items-center gap-1 pr-4" id="brandNavContainer">
             </div>
-            <div class="flex items-center">
-                <div class="flex items-center gap-2 bg-white/80 border border-slate-200 px-2 sm:px-3 py-1 rounded-full shadow-sm backdrop-blur-sm">
-                    <span class="relative flex h-2 w-2">
-                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                      <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                    </span>
-                    <span class="text-xs font-medium text-slate-500 hidden sm:inline" id="updateTime">同步中</span>
-                </div>
-            </div>
+
+        <div class="flex items-center gap-4 flex-shrink-0 ml-auto pl-4 border-l border-slate-100">
+            <select id="weekFilter" onchange="renderCards()" class="bg-slate-50 border border-slate-200 text-xs rounded px-2 py-1 outline-none focus:border-blue-500 text-slate-600">
+                <option value="all">📅 所有周期</option>
+            </select>
+            <span id="countDisplay" class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">0 条情报</span>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+    <div class="flex flex-1 overflow-hidden">
         
-        <div class="glass-wrapper mb-6 sm:mb-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                <div class="card-base p-4 sm:p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                            <div class="w-1.5 h-4 rounded-full bg-[#5470C6]"></div>
-                            声量分布
-                        </h3>
-                    </div>
-                    <div class="h-48 sm:h-56"><canvas id="brandChart"></canvas></div>
-                </div>
-                <div class="card-base p-4 sm:p-6 relative">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                            <div class="w-1.5 h-4 rounded-full bg-[#91CC75]"></div>
-                            维度占比
-                        </h3>
-                    </div>
-                    <div class="h-48 sm:h-56 relative flex items-center justify-center">
-                        <canvas id="dimensionChart"></canvas>
-                        <div id="dimensionCenterText" class="absolute text-center text-slate-600 pointer-events-none"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="glass-wrapper mb-6 sm:mb-8 sticky top-16 sm:top-20 z-40 p-2 sm:p-3 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
+        <aside class="hidden lg:flex flex-col w-80 bg-slate-50 border-r border-slate-200 p-4 overflow-y-auto flex-shrink-0 z-20">
+            <h3 class="text-xs font-bold text-slate-400 uppercase mb-4 tracking-wider px-1">Data Visuals</h3>
             
-            <div class="flex items-center gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar px-1 pb-1 sm:pb-0">
-                <div class="flex items-center text-slate-400 mr-1 flex-shrink-0">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+            <div class="chart-card">
+                <div class="text-xs font-bold text-slate-700 mb-3 flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> 声量分布 (Volume)
                 </div>
-                <div class="custom-select-wrapper">
-                    <select id="weekFilter" onchange="renderCards()" class="custom-select pr-8 sm:pr-10"><option value="all">📅 周期</option></select>
-                    <svg class="select-arrow w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                <div class="h-48"><canvas id="brandChart"></canvas></div>
+            </div>
+
+            <div class="chart-card">
+                <div class="text-xs font-bold text-slate-700 mb-3 flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> 维度占比 (Share)
                 </div>
-                <div class="custom-select-wrapper">
-                    <select id="brandFilter" onchange="renderCards()" class="custom-select pr-8 sm:pr-10"><option value="all">🏢 品牌</option></select>
-                    <svg class="select-arrow w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                </div>
-                <div class="custom-select-wrapper">
-                    <select id="typeFilter" onchange="renderCards()" class="custom-select pr-8 sm:pr-10">
-                        <option value="all">🎯 维度</option>
-                        <option value="产品与技术">产品与技术</option>
-                        <option value="市场与营销">市场与营销</option>
-                        <option value="公司与战略">公司与战略</option>
-                    </select>
-                    <svg class="select-arrow w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                <div class="h-48 relative flex justify-center">
+                    <canvas id="dimensionChart"></canvas>
                 </div>
             </div>
+
+            <div class="mt-auto pt-6 text-center">
+                 <p class="text-[10px] text-slate-400">数据最后更新于 <span id="updateTime">--</span></p>
+            </div>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto bg-white p-4 md:p-8 scroll-smooth" id="mainScroll">
             
-            <div class="flex items-center gap-2 px-4 w-full sm:w-auto justify-end border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 h-auto sm:h-6">
-                <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Total</span>
-                <span id="countDisplay" class="text-base sm:text-lg font-bold text-slate-800 font-mono">0</span>
+            <div class="lg:hidden mb-6 grid grid-cols-1 gap-4">
+                <div class="p-4 border rounded-lg bg-slate-50">
+                    <h3 class="text-xs font-bold text-slate-500 mb-2">数据概览</h3>
+                    <div class="h-40"><canvas id="mobileChart"></canvas></div>
+                </div>
             </div>
-        </div>
 
-        <div id="contentFeed" class="space-y-6 sm:space-y-8"></div>
-
-        <footer class="mt-12 sm:mt-20 pb-4 sm:pb-8 text-center">
-            <div class="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white border border-slate-200 shadow-sm">
-                <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
-                <p class="text-[10px] sm:text-xs text-slate-400 font-medium">Internal Use Only · 欧帝科技市场部</p>
-            </div>
-        </footer>
-    </main>
+            <div class="max-w-5xl mx-auto">
+                <div id="contentFeed" class="space-y-6">
+                    </div>
+                
+                <div class="h-20"></div> </div>
+        </main>
+    </div>
 
     <script>
         Chart.register(ChartDataLabels);
         const GOOGLE_SHEET_CSV_URL = "./data.csv"; 
-        
-        // 🎨 核心配色：AntV / ECharts 经典色盘 (参照上传的图片风格)
-        const CUSTOM_COLORS = [
-            '#5470C6', // 深蓝
-            '#91CC75', // 草绿
-            '#FAC858', // 明黄
-            '#EE6666', // 珊瑚红
-            '#73C0DE', // 天蓝
-            '#3BA272', // 深绿
-            '#FC8452', // 橙色
-            '#9A60B4', // 紫色
-            '#EA7CCC'  // 粉色
-        ];
-
-        function getColor(index) { return CUSTOM_COLORS[index % CUSTOM_COLORS.length]; }
-
         let rawData = [];
+        let currentBrandFilter = 'all'; // 当前选中的品牌
+
+        // 鲜艳配色
+        const COLORS = ['#5470C6', '#91CC75', '#FAC858', '#EE6666', '#73C0DE', '#3BA272', '#FC8452', '#9A60B4'];
+        function getColor(i) { return COLORS[i % COLORS.length]; }
 
         function loadData() {
             Papa.parse(GOOGLE_SHEET_CSV_URL, {
-                download: true,
-                header: true,
-                skipEmptyLines: true,
-                complete: function(results) {
-                    rawData = results.data.map(row => ({
-                        week: row['周期'] || row['Week'] || '未知',
-                        date: row['日期'] || row['Date'] || '',
-                        brand: row['竞品品牌'] || row['Brand'] || '其他',
-                        dim: row['追踪维度（单选）'] || row['Dimension'] || '其他',
-                        fact: row['事实描述'] || row['Fact'] || '无描述',
-                        analysis: row['分析'] || row['Analysis'] || '',
-                        link: row['信息源'] || row['Link'] || ''
-                    })).filter(item => item.brand && item.fact);
+                download: true, header: true, skipEmptyLines: true,
+                complete: (res) => {
+                    rawData = res.data.map(r => ({
+                        week: r['周期']||r['Week']||'', date: r['日期']||'', brand: r['竞品品牌']||'', 
+                        dim: r['追踪维度（单选）']||'', fact: r['事实描述']||'', analysis: r['分析']||'', link: r['信息源']||''
+                    })).filter(i => i.brand && i.fact);
                     initApp();
-                },
-                error: function(err) { console.error(err); }
+                }
             });
         }
 
         function initApp() {
             document.getElementById('loading').style.display = 'none';
-            document.getElementById('updateTime').textContent = "Updated: " + new Date().toLocaleDateString(undefined, {month:'short', day:'numeric'});
+            document.getElementById('updateTime').textContent = new Date().toLocaleDateString();
+            
+            // 初始化品牌导航
+            const brands = ['全部', ...new Set(rawData.map(i => i.brand))];
+            const navContainer = document.getElementById('brandNavContainer');
+            
+            brands.forEach(brand => {
+                const btn = document.createElement('div');
+                btn.className = `nav-brand-item ${brand === '全部' ? 'active' : ''}`;
+                btn.textContent = brand;
+                btn.onclick = () => {
+                    // 切换 Active 样式
+                    document.querySelectorAll('.nav-brand-item').forEach(el => el.classList.remove('active'));
+                    btn.classList.add('active');
+                    // 设置过滤器
+                    currentBrandFilter = brand === '全部' ? 'all' : brand;
+                    renderCards(); // 重新渲染卡片
+                    renderCharts(); // 重新渲染图表 (跟随筛选)
+                };
+                navContainer.appendChild(btn);
+            });
+
+            // 初始化周期筛选
             const weeks = [...new Set(rawData.map(i => i.week))].sort().reverse();
-            const brands = [...new Set(rawData.map(i => i.brand))];
-            const wSelect = document.getElementById('weekFilter');
-            weeks.forEach(w => wSelect.add(new Option(w, w)));
-            const bSelect = document.getElementById('brandFilter');
-            brands.forEach(b => bSelect.add(new Option(b, b)));
-            if(weeks.length > 0) document.getElementById('dateRange').textContent = `${weeks[weeks.length-1]} ~ ${weeks[0]}`;
+            weeks.forEach(w => document.getElementById('weekFilter').add(new Option(w, w)));
+
             renderCharts();
             renderCards();
         }
 
-        function renderCharts() {
-            const brandCounts = {};
-            rawData.forEach(i => brandCounts[i.brand] = (brandCounts[i.brand] || 0) + 1);
-            const dimCounts = {};
-            rawData.forEach(i => dimCounts[i.dim] = (dimCounts[i.dim] || 0) + 1);
+        let chartInstances = {};
 
-            // 1. 声量分布：多色柱状图
-            const brandColors = Object.keys(brandCounts).map((_, i) => getColor(i));
-            new Chart(document.getElementById('brandChart'), {
+        function renderCharts() {
+            // 根据当前品牌筛选数据 (如果选了全部，就显示全部数据)
+            const activeData = currentBrandFilter === 'all' 
+                ? rawData 
+                : rawData.filter(i => i.brand === currentBrandFilter);
+
+            const bCounts = {}, dCounts = {};
+            activeData.forEach(i => { 
+                bCounts[i.brand] = (bCounts[i.brand]||0)+1; 
+                dCounts[i.dim] = (dCounts[i.dim]||0)+1; 
+            });
+
+            // --- 左侧图表 1: 品牌声量 ---
+            const ctxBrand = document.getElementById('brandChart').getContext('2d');
+            if(chartInstances.brand) chartInstances.brand.destroy();
+            chartInstances.brand = new Chart(ctxBrand, {
                 type: 'bar',
                 data: {
-                    labels: Object.keys(brandCounts),
+                    labels: Object.keys(bCounts),
                     datasets: [{
-                        data: Object.values(brandCounts),
-                        backgroundColor: brandColors,
-                        borderRadius: 4,
-                        barThickness: window.innerWidth < 640 ? 16 : 28
+                        data: Object.values(bCounts),
+                        backgroundColor: Object.keys(bCounts).map((_,i) => getColor(i)),
+                        borderRadius: 4, barThickness: 20
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, datalabels: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: '#f1f5f9' }, border: { display: false }, ticks: { font: { size: 10 } } },
-                        x: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 10 } } }
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: {display:false}, datalabels: {display:false} },
+                    scales: { y: {beginAtZero:true}, x: {grid:{display:false}} }
+                }
+            });
+
+            // --- 左侧图表 2: 维度占比 ---
+            const total = Object.values(dCounts).reduce((a,b)=>a+b,0);
+            const ctxDim = document.getElementById('dimensionChart').getContext('2d');
+            if(chartInstances.dim) chartInstances.dim.destroy();
+            chartInstances.dim = new Chart(ctxDim, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(dCounts),
+                    datasets: [{
+                        data: Object.values(dCounts),
+                        backgroundColor: Object.keys(dCounts).map((_,i) => getColor(i+4)),
+                        borderWidth: 0, hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, cutout: '70%',
+                    plugins: { 
+                        legend: { position:'bottom', labels:{usePointStyle:true, boxWidth:6, font:{size:9}, padding:10} },
+                        datalabels: { display: false } // 侧边栏太窄，不显示标签了
                     }
                 }
             });
 
-            // 2. 维度占比：多色甜甜圈 + 百分比标签
-            const dimColors = Object.keys(dimCounts).map((_, i) => getColor(i + 3)); // 颜色偏移
-            const total = Object.values(dimCounts).reduce((a, b) => a + b, 0);
-            
-            const dimCtx = document.getElementById('dimensionChart');
-            if (window.dimChart) window.dimChart.destroy();
-            
-            window.dimChart = new Chart(dimCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(dimCounts),
-                    datasets: [{
-                        data: Object.values(dimCounts),
-                        backgroundColor: dimColors,
-                        borderWidth: 0,
-                        hoverOffset: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '65%',
-                    plugins: { 
-                        legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 8, font: { size: 11 } } },
-                        datalabels: {
-                            color: '#fff',
-                            font: { weight: 'bold', size: 10 },
-                            formatter: (value) => Math.round(value / total * 100) + '%'
-                        }
+            // --- 手机端备用图表 (只显示一个简单的) ---
+            if(window.innerWidth < 1024) {
+                const ctxMobile = document.getElementById('mobileChart').getContext('2d');
+                if(chartInstances.mobile) chartInstances.mobile.destroy();
+                chartInstances.mobile = new Chart(ctxMobile, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(bCounts),
+                        datasets: [{ data: Object.values(bCounts), backgroundColor: '#3b82f6' }]
                     },
-                    onHover: (e, els) => {
-                        const center = document.getElementById('dimensionCenterText');
-                        if(els.length) {
-                            const i = els[0].index;
-                            const label = window.dimChart.data.labels[i];
-                            const val = window.dimChart.data.datasets[0].data[i];
-                            center.innerHTML = `<div class="text-xs text-slate-500">${label}</div><div class="text-xl font-bold text-slate-800">${Math.round(val/total*100)}%</div>`;
-                        } else {
-                            center.innerHTML = `<div class="text-xs text-slate-500">总计</div><div class="text-xl font-bold text-slate-800">${total}</div>`;
-                        }
-                    }
-                }
-            });
-            document.getElementById('dimensionCenterText').innerHTML = `<div class="text-xs text-slate-500">总计</div><div class="text-xl font-bold text-slate-800">${total}</div>`;
+                    options: { plugins: {legend: {display:false}}, responsive: true, maintainAspectRatio: false }
+                });
+            }
         }
 
         function renderCards() {
-            const weekVal = document.getElementById('weekFilter').value;
-            const brandVal = document.getElementById('brandFilter').value;
-            const typeVal = document.getElementById('typeFilter').value;
-            const container = document.getElementById('contentFeed');
-            container.innerHTML = '';
-
+            const wVal = document.getElementById('weekFilter').value;
+            
+            // 双重过滤：Header品牌选择 + 右上角周期选择
             const filtered = rawData.filter(item => 
-                (weekVal === 'all' || item.week === weekVal) &&
-                (brandVal === 'all' || item.brand === brandVal) &&
-                (typeVal === 'all' || item.dim === typeVal)
+                (currentBrandFilter === 'all' || item.brand === currentBrandFilter) &&
+                (wVal === 'all' || item.week === wVal)
             );
 
-            document.getElementById('countDisplay').textContent = filtered.length;
+            document.getElementById('countDisplay').textContent = filtered.length + " 条情报";
+            
+            const container = document.getElementById('contentFeed');
+            container.innerHTML = '';
+            
+            if(filtered.length === 0) {
+                container.innerHTML = `<div class="text-center text-slate-400 py-10">该筛选条件下无数据</div>`;
+                return;
+            }
+
+            // 按周分组
             const groups = filtered.reduce((acc, curr) => { (acc[curr.week] = acc[curr.week] || []).push(curr); return acc; }, {});
             
             Object.keys(groups).sort().reverse().forEach(week => {
-                const header = document.createElement('div');
-                header.className = "flex items-center space-x-3 mt-6 mb-4";
-                header.innerHTML = `<span class="bg-slate-800 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm">${week}</span><div class="h-px bg-slate-300 flex-grow"></div>`;
-                container.appendChild(header);
+                // 周标题
+                const weekHeader = document.createElement('div');
+                weekHeader.className = "flex items-center gap-3 mt-6 mb-3";
+                weekHeader.innerHTML = `
+                    <span class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded">${week}</span>
+                    <div class="h-px bg-slate-100 flex-grow"></div>
+                `;
+                container.appendChild(weekHeader);
 
                 const grid = document.createElement('div');
-                grid.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
+                grid.className = "grid grid-cols-1 gap-4"; // 单列流，适合宽卡片
+                
                 groups[week].forEach(item => {
-                    let brandStyle = 'bg-slate-50 text-slate-600 border-slate-200';
-                    // 品牌标签根据名称匹配色系
-                    if(['华为','新华三'].some(k=>item.brand.includes(k))) brandStyle = 'bg-red-50 text-red-600 border-red-100';
-                    if(['腾讯','浪潮'].some(k=>item.brand.includes(k))) brandStyle = 'bg-blue-50 text-blue-600 border-blue-100';
-                    if(['阿里','金智'].some(k=>item.brand.includes(k))) brandStyle = 'bg-orange-50 text-orange-600 border-orange-100';
+                    // 定义左侧边框颜色
+                    let borderColor = '#cbd5e1'; // 默认灰
+                    let dimColor = '#64748b';
+                    if(item.dim.includes('战略')) { borderColor = '#3b82f6'; dimColor = '#2563eb'; } // 蓝
+                    else if(item.dim.includes('产品')) { borderColor = '#22c55e'; dimColor = '#16a34a'; } // 绿
+                    else if(item.dim.includes('市场')) { borderColor = '#f97316'; dimColor = '#ea580c'; } // 橙
 
-                    let dimClass = 'tag-market';
-                    if(item.dim.includes('战略')) dimClass = 'tag-strategy';
-                    if(item.dim.includes('产品')) dimClass = 'tag-product';
-
-                    const linkHtml = item.link ? `<a href="${item.link}" target="_blank" class="inline-flex items-center text-xs font-semibold text-blue-600 hover:text-blue-800 mt-4 pt-4 border-t border-slate-100 w-full">阅读详情 &rarr;</a>` : '';
+                    const linkHtml = item.link ? `<a href="${item.link}" target="_blank" class="text-slate-400 hover:text-blue-600 transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></a>` : '';
 
                     const card = document.createElement('div');
-                    card.className = "card-base p-5 card-hover flex flex-col h-full";
+                    card.className = "feed-card";
+                    card.style.borderLeftColor = borderColor;
+                    
                     card.innerHTML = `
-                        <div class="flex justify-between items-start mb-3">
-                            <span class="brand-badge border ${brandStyle}">${item.brand}</span>
-                            <span class="tag-base ${dimClass}">${item.dim}</span>
+                        <div class="flex justify-between items-start gap-4">
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">${item.brand}</span>
+                                    <span class="text-[10px] text-slate-300">•</span>
+                                    <span class="text-xs text-slate-400">${item.date}</span>
+                                </div>
+                                <h4 class="text-base font-bold text-slate-800 leading-snug">${item.fact}</h4>
+                            </div>
+                            ${linkHtml}
                         </div>
-                        <h4 class="text-[15px] font-bold text-slate-800 leading-snug mb-3 line-clamp-2" title="${item.fact}">${item.fact}</h4>
-                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 mb-auto">
-                            <p class="text-xs text-slate-500 text-justify leading-relaxed">${item.analysis}</p>
+
+                        <div class="bg-slate-50 p-3 rounded text-sm text-slate-600 leading-relaxed text-justify">
+                            ${item.analysis}
                         </div>
-                        ${linkHtml}
-                        <div class="mt-3 text-[10px] text-slate-400 text-right">${item.date}</div>
+
+                        <div class="flex items-center gap-2">
+                             <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100" style="color:${dimColor}">${item.dim}</span>
+                        </div>
                     `;
                     grid.appendChild(card);
                 });
                 container.appendChild(grid);
             });
         }
+
         loadData();
     </script>
 </body>
