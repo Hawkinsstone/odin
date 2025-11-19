@@ -41,7 +41,7 @@
         .nav-tab.active::after {
             content: '';
             position: absolute;
-            bottom: -20px; /* Web端下划线位置 */
+            bottom: -20px;
             left: 0;
             width: 100%;
             height: 2px;
@@ -82,29 +82,31 @@
         }
         .feed-item:last-child { border-bottom: none; }
 
-        /* === 布局控制 (Web Fix) === */
+        /* === 布局控制 === */
+        .nav-center-layout { justify-content: center; }
+        .timeline-center-layout { justify-content: center; }
         .header-inner { height: 100%; display: flex; align-items: center; justify-content: space-between; }
         
-        /* PC端: Logo和占位符宽度，适当缩小以防挤压导航 */
+        /* PC端: Logo宽度 */
         .logo-placeholder-width { width: 140px; } 
-
-        /* PC端: 导航容器布局 */
+        
+        /* PC端: 导航容器 */
         .pc-nav-container {
             flex: 1;
             display: flex;
             overflow-x: auto;
             height: 100%;
             align-items: center;
-            /* 关键: 使用 safe center 保证溢出时左对齐，未溢出时居中 */
+            /* 智能居中: 溢出时左对齐，未溢出时居中 */
             justify-content: center; 
+            justify-content: safe center; 
         }
 
-        /* === 📱 手机端深度适配 === */
+        /* === 手机端适配 === */
         @media (max-width: 768px) {
             .header-wrapper { height: auto !important; border-bottom: none; }
             .header-inner { flex-direction: column; height: auto; padding: 0; }
             
-            /* 1. Logo: 第一行居中 */
             .logo-area { 
                 width: 100% !important; 
                 justify-content: center !important; 
@@ -113,20 +115,17 @@
                 margin-bottom: 4px;
             }
             
-            /* 2. 品牌导航: 第二行靠左 */
             .pc-nav-container { 
                 width: 100%; 
-                justify-content: flex-start !important; /* 强制靠左 */
+                justify-content: flex-start !important; 
                 padding: 0 16px !important;
                 overflow-x: auto;
             }
             .nav-tab { margin: 0 20px 0 0; font-size: 0.95rem; padding: 8px 0; }
-            .nav-tab.active::after { bottom: 0px; } /* 手机端下划线紧贴 */
+            .nav-tab.active::after { bottom: 0px; }
             
-            /* 3. 隐藏右侧占位 */
             .spacer-area { display: none; }
 
-            /* 4. 时间轴: 第三行靠左 */
             .timeline-container-mobile { border-top: 1px solid #f9fafb; }
             .timeline-center-layout { 
                 justify-content: flex-start !important; 
@@ -179,9 +178,16 @@
     <main class="flex-1 w-full max-w-4xl mx-auto px-6 pb-20">
         <div id="contentFeed"></div>
         
-        <footer class="mt-16 pt-12 border-t border-gray-50 text-center text-gray-400">
-            <div class="text-[10px] font-mono tracking-widest uppercase mb-2">Internal Intelligence System</div>
-            <div class="text-[10px] font-medium text-gray-300">Design by Stone</div>
+        <footer class="mt-16 pt-12 border-t border-gray-50 text-center">
+            
+            <div class="mb-6">
+                <p class="text-sm font-medium text-gray-500 tracking-wide">每周五分钟竞品聚合动态阅读</p>
+            </div>
+
+            <div class="text-gray-400">
+                <div class="text-[10px] font-mono tracking-widest uppercase mb-2">Internal Intelligence System</div>
+                <div class="text-[10px] font-medium text-gray-300">Design by Stone</div>
+            </div>
         </footer>
     </main>
 
