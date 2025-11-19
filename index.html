@@ -20,7 +20,7 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* === 顶部品牌导航 (Tab) === */
+        /* === 第一排：品牌导航 (Tab) === */
         .nav-tab {
             font-size: 0.9rem; 
             color: #888;
@@ -35,43 +35,41 @@
         }
         .nav-tab:hover { color: #000; }
         .nav-tab.active { color: #000; font-weight: 600; }
-        /* 品牌选中下划线 */
         .nav-tab.active::after {
             content: '';
             position: absolute;
-            bottom: -20px; /* 贴合 Header 底部 */
+            bottom: -20px;
             left: 0;
             width: 100%;
             height: 2px;
             background-color: #000;
         }
 
-        /* === 时间轴滑动条 (Timeline) === */
+        /* === 第二排：时间轴滑动条 (Timeline) === */
         .timeline-item {
-            font-size: 0.75rem; /* 12px */
-            color: #9ca3af; /* 浅灰 */
+            font-size: 0.75rem; 
+            color: #9ca3af; 
             cursor: pointer;
             padding: 6px 16px;
             border-radius: 99px;
             transition: all 0.2s;
             white-space: nowrap;
-            font-family: 'Inter', monospace; /* 数字用等宽字体更好看 */
+            font-family: 'Inter', monospace; 
             letter-spacing: 0.05em;
             position: relative;
+            flex-shrink: 0;
         }
         .timeline-item:hover { color: #374151; }
         
-        /* 时间轴选中态 */
         .timeline-item.active {
             color: #000;
             font-weight: 700;
             background-color: #f3f4f6;
         }
-        /* 选中项前面的小圆点装饰 */
         .timeline-item.active::before {
             content: '•';
             margin-right: 6px;
-            color: #2563eb; /* 蓝色圆点 */
+            color: #2563eb; 
         }
 
         /* === 列表布局 === */
@@ -91,11 +89,7 @@
             .nav-center-layout { justify-content: flex-start; padding-left: 16px; }
             .nav-tab { font-size: 1rem; margin-right: 24px; }
             .nav-tab.active::after { bottom: -12px; }
-            
-            /* 列表变为垂直 */
             .feed-item { grid-template-columns: 1fr; gap: 12px; padding: 24px 0; }
-            
-            /* 时间轴调整 */
             .timeline-container { padding-left: 16px; padding-right: 16px; }
         }
 
@@ -116,7 +110,6 @@
 
         #loading { position: fixed; inset: 0; background:white; z-index: 100; display: flex; justify-content: center; align-items: center; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
         .hide-scroll::-webkit-scrollbar { display: none; }
     </style>
@@ -129,7 +122,6 @@
         
         <div class="h-16 border-b border-gray-50">
             <div class="max-w-4xl mx-auto h-full flex items-center justify-between relative">
-                
                 <div class="logo-area w-[180px] flex-shrink-0 flex items-center pl-6">
                     <img src="./logo.png" class="h-6 w-auto object-contain">
                 </div>
@@ -196,19 +188,19 @@
                 navContainer.appendChild(div);
             });
 
-            // 2. 时间轴滑动条
+            // 2. 时间轴
             const weeks = [...new Set(rawData.map(i => i.week))].sort().reverse();
             const tlContainer = document.getElementById('timelineContainer');
 
-            // "All Time" 按钮
+            // All Time
             addTimelineItem(tlContainer, 'All Time', 'all', true);
             
-            // 增加一个分隔竖线
+            // 分隔线
             const divider = document.createElement('div');
             divider.className = "h-4 w-px bg-gray-200 mx-2 flex-shrink-0";
             tlContainer.appendChild(divider);
 
-            // 周次按钮
+            // 周次
             weeks.forEach(week => {
                 addTimelineItem(tlContainer, week, week, false);
             });
@@ -248,17 +240,22 @@
             const groups = filtered.reduce((acc, curr) => { (acc[curr.week] = acc[curr.week] || []).push(curr); return acc; }, {});
             
             Object.keys(groups).sort().reverse().forEach((week, idx) => {
-                // 逻辑：如果选了具体某一周，就不显示标题分割线了，直接展示内容（更沉浸）
-                // 如果选了 All Time，则显示周标题分割线
+                
+                // 🟢 核心修改逻辑：
+                // 如果当前筛选是 "All Time"，则显示周标题（作为分隔符）。
+                // 如果当前筛选是 "具体某周"（例如47周），则不显示标题，直接展示内容。
                 if (currentWeekFilter === 'all') {
                     const header = document.createElement('div');
                     header.className = `py-3 mb-4 border-b border-gray-100 text-[11px] font-bold text-gray-400 uppercase tracking-widest ${idx > 0 ? 'mt-12' : 'mt-6'}`;
                     header.textContent = week;
                     container.appendChild(header);
-                } else if (idx === 0) {
-                     const spacer = document.createElement('div');
-                     spacer.className = "mt-8";
-                     container.appendChild(spacer);
+                } else {
+                    // 如果选了具体某周，给顶部加一点点留白即可，不要文字
+                    if(idx === 0) {
+                        const spacer = document.createElement('div');
+                        spacer.className = "mt-8";
+                        container.appendChild(spacer);
+                    }
                 }
 
                 groups[week].forEach(item => {
