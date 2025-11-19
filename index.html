@@ -50,7 +50,6 @@
         
         .select-arrow { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #94a3b8; }
 
-        /* 隐藏滚动条但保留滚动功能 (用于手机端横向滑动) */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -102,7 +101,7 @@
             <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-slate-100">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                        <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                        <div class="w-2 h-2 rounded-full bg-indigo-500"></div>
                         声量分布
                     </h3>
                 </div>
@@ -120,26 +119,18 @@
         </div>
 
         <div class="bg-white py-3 px-2 sm:p-2 rounded-xl sm:rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-100 mb-6 sm:mb-8 sticky top-16 sm:top-20 z-40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            
             <div class="flex items-center gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar px-2 pb-1 sm:pb-0">
                 <div class="flex items-center text-slate-400 mr-1 flex-shrink-0">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
                 </div>
-
                 <div class="custom-select-wrapper">
-                    <select id="weekFilter" onchange="renderCards()" class="custom-select pr-8 sm:pr-10">
-                        <option value="all">📅 周期</option>
-                    </select>
+                    <select id="weekFilter" onchange="renderCards()" class="custom-select pr-8 sm:pr-10"><option value="all">📅 周期</option></select>
                     <svg class="select-arrow w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </div>
-
                 <div class="custom-select-wrapper">
-                    <select id="brandFilter" onchange="renderCards()" class="custom-select pr-8 sm:pr-10">
-                        <option value="all">🏢 品牌</option>
-                    </select>
+                    <select id="brandFilter" onchange="renderCards()" class="custom-select pr-8 sm:pr-10"><option value="all">🏢 品牌</option></select>
                     <svg class="select-arrow w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </div>
-
                 <div class="custom-select-wrapper">
                     <select id="typeFilter" onchange="renderCards()" class="custom-select pr-8 sm:pr-10">
                         <option value="all">🎯 维度</option>
@@ -168,7 +159,6 @@
     </main>
 
     <script>
-        // 🔴 数据源配置
         const GOOGLE_SHEET_CSV_URL = "./data.csv"; 
 
         let rawData = [];
@@ -220,18 +210,23 @@
             const dimCounts = {};
             rawData.forEach(i => dimCounts[i.dim] = (dimCounts[i.dim] || 0) + 1);
 
-            // 声量分布图表
-            new Chart(document.getElementById('brandChart'), {
+            // 1. 声量分布：高端商务蓝渐变
+            const ctxBrand = document.getElementById('brandChart').getContext('2d');
+            const gradientBlue = ctxBrand.createLinearGradient(0, 0, 0, 400);
+            gradientBlue.addColorStop(0, '#4F46E5'); // 顶部：深靛蓝
+            gradientBlue.addColorStop(1, '#3B82F6'); // 底部：亮蓝
+
+            new Chart(ctxBrand, {
                 type: 'bar',
                 data: {
                     labels: Object.keys(brandCounts),
                     datasets: [{
                         label: 'Count',
                         data: Object.values(brandCounts),
-                        backgroundColor: 'rgba(54, 130, 255, 0.85)', // 科技蓝，略带透明度
-                        hoverBackgroundColor: '#3682FF', // 悬停时加深
+                        backgroundColor: gradientBlue, 
+                        hoverBackgroundColor: '#4338ca',
                         borderRadius: 4,
-                        barThickness: window.innerWidth < 640 ? 16 : 24
+                        barThickness: window.innerWidth < 640 ? 16 : 28
                     }]
                 },
                 options: {
@@ -245,23 +240,30 @@
                 }
             });
 
-            // 维度占比图表
+            // 2. 维度占比：高质感三色组合
             new Chart(document.getElementById('dimensionChart'), {
                 type: 'doughnut',
                 data: {
                     labels: Object.keys(dimCounts),
                     datasets: [{
                         data: Object.values(dimCounts),
-                        backgroundColor: ['#6DD400', '#FF8E2E', '#3682FF'], // 绿色、欧帝橙、科技蓝
-                        borderWidth: 0, // 移除边框
-                        hoverOffset: 6 // 悬停偏移量稍大一点
+                        // 顺序：绿(战略/科技感), 橙(产品/活力), 蓝(市场/稳重)
+                        backgroundColor: ['#0EA5E9', '#F97316', '#3B82F6'], 
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                        hoverOffset: 6
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    cutout: '70%',
-                    plugins: { legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 6, font: { size: 10 } } } }
+                    cutout: '72%',
+                    plugins: { 
+                        legend: { 
+                            position: 'right', 
+                            labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 8, font: { size: 11, family: "'Noto Sans SC'" } } 
+                        } 
+                    }
                 }
             });
         }
