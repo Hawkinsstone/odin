@@ -4,10 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Competitor Intelligence | Odin</title>
-    
     <link rel="icon" href="./logo.png" type="image/png">
-    <link rel="apple-touch-icon" href="./logo.png">
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -86,25 +83,16 @@
         }
         .feed-item:last-child { border-bottom: none; }
 
-        /* === 布局控制类 === */
-        .nav-center-layout { justify-content: center; }
-        .timeline-center-layout { justify-content: center; }
-
         /* === 手机端适配 === */
         @media (max-width: 768px) {
-            .nav-center-layout { justify-content: flex-start !important; padding-left: 4px; }
-            .timeline-center-layout { justify-content: flex-start !important; padding-left: 16px; padding-right: 16px; }
-            .logo-area { 
-                width: auto !important; 
-                padding-left: 16px !important; 
-                padding-right: 12px;
-                border-right: 1px solid #f3f4f6; 
-                margin-right: 8px; 
-            }
+            .logo-area { display: none; } 
             .spacer-area { display: none; }
-            .nav-tab { font-size: 0.95rem; margin: 0 16px 0 0; }
+            .nav-center-layout { justify-content: flex-start; padding-left: 16px; }
+            .nav-tab { font-size: 1rem; margin-right: 24px; }
             .nav-tab.active::after { bottom: -12px; }
             .feed-item { grid-template-columns: 1fr; gap: 12px; padding: 24px 0; }
+            
+            .timeline-center-layout { justify-content: flex-start !important; padding-left: 16px; padding-right: 16px; }
         }
 
         /* 标签颜色 */
@@ -136,12 +124,11 @@
         
         <div class="h-16 border-b border-gray-50">
             <div class="max-w-4xl mx-auto h-full flex items-center justify-between relative">
-                
                 <div class="logo-area w-[180px] flex-shrink-0 flex items-center pl-6 cursor-pointer group" onclick="resetAll()">
                     <img src="./logo.png" class="h-6 w-auto object-contain opacity-100 transition-opacity group-hover:opacity-80">
                 </div>
 
-                <div class="flex-1 flex overflow-x-auto hide-scroll h-full items-center nav-center-layout" id="topBrandNav">
+                <div class="flex-1 flex justify-center overflow-x-auto hide-scroll h-full items-center nav-center-layout" id="topBrandNav">
                     </div>
 
                 <div class="spacer-area w-[180px] flex-shrink-0"></div>
@@ -149,7 +136,7 @@
         </div>
 
         <div class="h-12 bg-white">
-            <div class="max-w-4xl mx-auto h-full flex items-center overflow-x-auto hide-scroll timeline-center-layout" id="timelineContainer">
+            <div class="max-w-4xl mx-auto h-full flex items-center justify-center overflow-x-auto hide-scroll timeline-center-layout" id="timelineContainer">
                 </div>
         </div>
     </div>
@@ -174,11 +161,9 @@
                 download: true, header: true, skipEmptyLines: true,
                 complete: (res) => {
                     rawData = res.data.map(r => {
-                        // 1. 品牌修正
                         let brandName = r['竞品品牌']||r['Brand']||'';
                         if (brandName === '华三') brandName = '新华三'; 
                         
-                        // 2. 日期格式化
                         let dateStr = r['日期']||r['Date']||'';
                         if (/^\d{8,}$/.test(dateStr)) {
                             const dateObj = new Date(parseInt(dateStr));
@@ -213,8 +198,16 @@
         }
 
         function renderNavs() {
-            // 1. 品牌导航
-            const brands = ['All', ...new Set(rawData.map(i => i.brand))];
+            // 1. 品牌导航：混合数据与预设
+            // 获取 CSV 里现有的所有品牌 (去重)
+            const dataBrands = new Set(rawData.map(i => i.brand));
+            
+            // 🔴 强制添加 "新大陆" (无论数据里有没有)
+            dataBrands.add('新大陆');
+            
+            // 组合成最终数组，"All" 在最前
+            const brands = ['All', ...dataBrands];
+
             const navContainer = document.getElementById('topBrandNav');
             navContainer.innerHTML = ''; 
             
@@ -222,7 +215,7 @@
                 const div = document.createElement('div');
                 const isActive = (brand === 'All' && currentBrandFilter === 'all') || (brand === currentBrandFilter);
                 div.className = `nav-tab ${isActive ? 'active' : ''}`;
-                div.textContent = brand === 'All' ? '全部' : brand; 
+                div.textContent = brand === 'All' ? '全部品牌' : brand; 
                 div.onclick = function(e) {
                     currentBrandFilter = brand === 'All' ? 'all' : brand;
                     renderNavs(); 
@@ -238,15 +231,12 @@
             const tlContainer = document.getElementById('timelineContainer');
             tlContainer.innerHTML = ''; 
 
-            // 全部按钮
             addTimelineItem(tlContainer, '全部', 'all', currentWeekFilter === 'all');
             
-            // 分隔线
             const divider = document.createElement('div');
             divider.className = "h-4 w-px bg-gray-200 mx-2 flex-shrink-0";
             tlContainer.appendChild(divider);
 
-            // 周次按钮
             weeks.forEach(week => {
                 addTimelineItem(tlContainer, week, week, currentWeekFilter === week);
             });
@@ -284,6 +274,7 @@
             container.innerHTML = '';
 
             if (filtered.length === 0) {
+                // 针对新添加的品牌，如果没有数据，显示友好的提示
                 container.innerHTML = `<div class="py-32 text-center text-gray-300 text-sm font-mono">暂无相关情报数据</div>`;
                 return;
             }
