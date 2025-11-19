@@ -1,22 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>竞品追踪周报 | 动态更新版</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
-        .tag-strategy { background-color: #e0e7ff; color: #3730a3; }
-        .tag-product { background-color: #dcfce7; color: #166534; }
-        .tag-market { background-color: #ffedd5; color: #9a3412; }
-        .brand-badge { font-weight: bold; border-radius: 4px; padding: 2px 6px; font-size: 0.75rem; }
-        #loading { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); display:flex; justify-content:center; align-items:center; z-index:100; }
-    </style>
-</head>
+<header class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div class="flex items-center">
+            <img src="https://odin.png" alt="欧帝 Logo" class="h-8 w-auto mr-3"> 
+            <h1 class="text-xl font-bold text-gray-900">竞品追踪周报 <span id="dateRange" class="text-sm font-normal text-gray-500 ml-2"></span></h1>
+        </div>
+        <div class="text-sm text-gray-500" id="updateTime"></div>
+    </div>
+</header>
 <body class="text-gray-800">
 
     <div id="loading">
