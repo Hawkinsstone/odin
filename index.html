@@ -29,7 +29,7 @@
         .card-hover:hover { transform: translateY(-3px); box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.08); border-color: #cbd5e1; }
         
         /* 自定义下拉菜单样式 */
-        .custom-select-wrapper { position: relative; flex-shrink: 0; } /* 防止在手机上被压缩 */
+        .custom-select-wrapper { position: relative; flex-shrink: 0; }
         .custom-select {
             appearance: none;
             -webkit-appearance: none;
@@ -37,13 +37,13 @@
             border: 1px solid transparent;
             padding: 8px 32px 8px 14px;
             border-radius: 9999px;
-            font-size: 0.875rem; /* 14px */
+            font-size: 0.875rem;
             font-weight: 500;
             color: #475569;
             cursor: pointer;
             transition: all 0.2s;
             line-height: 1.5;
-            white-space: nowrap; /* 防止文字换行 */
+            white-space: nowrap;
         }
         .custom-select:hover { background-color: #e2e8f0; color: #1e293b; }
         .custom-select:focus { outline: none; background-color: #fff; border-color: #f97316; box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1); }
@@ -220,6 +220,7 @@
             const dimCounts = {};
             rawData.forEach(i => dimCounts[i.dim] = (dimCounts[i.dim] || 0) + 1);
 
+            // 声量分布图表
             new Chart(document.getElementById('brandChart'), {
                 type: 'bar',
                 data: {
@@ -227,9 +228,10 @@
                     datasets: [{
                         label: 'Count',
                         data: Object.values(brandCounts),
-                        backgroundColor: '#3b82f6',
+                        backgroundColor: 'rgba(54, 130, 255, 0.85)', // 科技蓝，略带透明度
+                        hoverBackgroundColor: '#3682FF', // 悬停时加深
                         borderRadius: 4,
-                        barThickness: window.innerWidth < 640 ? 16 : 24 // 手机端柱子变细
+                        barThickness: window.innerWidth < 640 ? 16 : 24
                     }]
                 },
                 options: {
@@ -243,15 +245,16 @@
                 }
             });
 
+            // 维度占比图表
             new Chart(document.getElementById('dimensionChart'), {
                 type: 'doughnut',
                 data: {
                     labels: Object.keys(dimCounts),
                     datasets: [{
                         data: Object.values(dimCounts),
-                        backgroundColor: ['#22c55e', '#f97316', '#3b82f6'], 
-                        borderWidth: 0,
-                        hoverOffset: 4
+                        backgroundColor: ['#6DD400', '#FF8E2E', '#3682FF'], // 绿色、欧帝橙、科技蓝
+                        borderWidth: 0, // 移除边框
+                        hoverOffset: 6 // 悬停偏移量稍大一点
                     }]
                 },
                 options: {
@@ -309,7 +312,6 @@
                          </a>` : '';
 
                     const card = document.createElement('div');
-                    // 手机端 p-4, 桌面端 p-6
                     card.className = "bg-white rounded-xl p-4 sm:p-6 border border-slate-100 shadow-sm card-hover flex flex-col h-full relative overflow-hidden group";
                     card.innerHTML = `
                         <div class="absolute top-0 left-0 w-1 h-full ${dimClass.replace(/bg-|text-|border-/g, '').includes('green') ? 'bg-green-500' : (dimClass.includes('blue') ? 'bg-blue-500' : 'bg-orange-500')} opacity-0 group-hover:opacity-100 transition-opacity"></div>
