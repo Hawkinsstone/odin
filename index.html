@@ -19,28 +19,36 @@
             -webkit-font-smoothing: antialiased; 
         }
 
-        /* 顶部导航 Tab */
+        /* 顶部导航 Tab - 平铺样式 */
         .nav-tab {
-            font-size: 0.9rem;
-            color: #888;
+            font-size: 0.9rem; /* 14px */
+            color: #666;
             cursor: pointer;
-            transition: color 0.2s;
-            white-space: nowrap;
-            padding: 4px 0;
-            margin-right: 24px;
+            transition: all 0.2s;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 500;
         }
-        .nav-tab:hover { color: #000; }
-        .nav-tab.active { color: #000; font-weight: 600; border-bottom: 2px solid #000; }
+        .nav-tab:hover { 
+            color: #000; 
+            background-color: #f5f5f5; 
+        }
+        .nav-tab.active { 
+            color: #000; 
+            font-weight: 600; 
+            background-color: #f1f1f1; 
+        }
 
         /* 下拉框 */
         .minimal-select {
             appearance: none;
             background: transparent;
             font-size: 13px;
-            color: #666;
+            color: #888;
             font-weight: 500;
             cursor: pointer;
             padding-right: 16px;
+            text-align: right;
         }
         .minimal-select:hover { color: #000; }
 
@@ -71,24 +79,26 @@
         }
 
         #loading { position: fixed; inset: 0; background:white; z-index: 50; display: flex; justify-content: center; align-items: center; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="flex flex-col min-h-screen">
 
     <div id="loading"><div class="w-5 h-5 border-2 border-gray-200 border-t-black rounded-full animate-spin"></div></div>
 
-    <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100">
-        <div class="max-w-3xl mx-auto px-6 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-3 flex-shrink-0 mr-8">
-                <img src="./logo.png" class="h-5 w-auto grayscale opacity-90">
-                <div class="h-4 w-px bg-gray-200 hidden sm:block"></div>
-            </div>
-
-            <div class="flex-1 overflow-x-auto no-scrollbar flex items-center h-16" id="topBrandNav">
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-gray-100">
+        <div class="max-w-4xl mx-auto px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            
+            <div class="flex items-center gap-8 w-full">
+                <div class="flex items-center gap-3 flex-shrink-0">
+                    <img src="./logo.png" class="h-6 w-auto"> 
+                    <div class="h-4 w-px bg-gray-200 hidden sm:block"></div>
                 </div>
 
-            <div class="flex-shrink-0 flex items-center gap-4">
+                <div class="flex flex-wrap items-center gap-2" id="topBrandNav">
+                    </div>
+            </div>
+
+            <div class="flex-shrink-0 flex items-center gap-4 self-end md:self-center">
                 <div class="relative group">
                     <select id="weekFilter" onchange="renderFeed()" class="minimal-select">
                         <option value="all">All Time</option>
@@ -99,13 +109,8 @@
         </div>
     </header>
 
-    <main class="flex-1 w-full max-w-3xl mx-auto px-6 py-8">
+    <main class="flex-1 w-full max-w-4xl mx-auto px-6 py-4">
         
-        <div class="mb-12 pt-4">
-            <h1 class="text-3xl font-bold text-gray-900 tracking-tight mb-2" id="pageTitle">Latest Updates</h1>
-            <p class="text-gray-500 text-sm" id="subtitle">Tracking competitive movements across the market.</p>
-        </div>
-
         <div id="contentFeed">
             </div>
 
@@ -136,7 +141,7 @@
         function initApp() {
             document.getElementById('loading').style.display = 'none';
             
-            // 1. 生成顶部品牌 Tab
+            // 1. 生成顶部品牌 Tab (平铺)
             const brands = ['All', ...new Set(rawData.map(i => i.brand))];
             const navContainer = document.getElementById('topBrandNav');
             
@@ -148,9 +153,6 @@
                     document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
                     this.classList.add('active');
                     currentBrandFilter = brand === 'All' ? 'all' : brand;
-                    
-                    // 更新大标题
-                    document.getElementById('pageTitle').textContent = brand === 'All' ? 'Latest Updates' : `${brand} Updates`;
                     renderFeed();
                 };
                 navContainer.appendChild(div);
@@ -170,7 +172,6 @@
                 (wVal === 'all' || item.week === wVal)
             );
             
-            document.getElementById('subtitle').textContent = `${filtered.length} posts found`;
             const container = document.getElementById('contentFeed');
             container.innerHTML = '';
 
@@ -180,7 +181,7 @@
             Object.keys(groups).sort().reverse().forEach(week => {
                 // 周标题 (作为分隔符)
                 const header = document.createElement('div');
-                header.className = "sticky top-16 z-30 bg-white/95 py-4 mt-8 mb-2 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-widest backdrop-blur";
+                header.className = "sticky top-[72px] z-30 bg-white/95 py-3 mt-4 mb-2 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-widest backdrop-blur";
                 header.textContent = week;
                 container.appendChild(header);
 
