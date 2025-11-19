@@ -54,7 +54,7 @@
             border-radius: 99px;
             transition: all 0.2s;
             white-space: nowrap;
-            font-family: 'Inter', monospace; 
+            font-family: 'Inter', 'Noto Sans SC', sans-serif; 
             letter-spacing: 0.05em;
             position: relative;
             flex-shrink: 0;
@@ -90,7 +90,9 @@
             .nav-tab { font-size: 1rem; margin-right: 24px; }
             .nav-tab.active::after { bottom: -12px; }
             .feed-item { grid-template-columns: 1fr; gap: 12px; padding: 24px 0; }
-            .timeline-container { padding-left: 16px; padding-right: 16px; }
+            
+            /* 手机端时间轴也要靠左，方便滑动 */
+            .timeline-center-layout { justify-content: flex-start !important; padding-left: 16px; padding-right: 16px; }
         }
 
         /* 标签颜色 */
@@ -110,6 +112,7 @@
 
         #loading { position: fixed; inset: 0; background:white; z-index: 100; display: flex; justify-content: center; align-items: center; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
         .hide-scroll::-webkit-scrollbar { display: none; }
     </style>
@@ -122,8 +125,8 @@
         
         <div class="h-16 border-b border-gray-50">
             <div class="max-w-4xl mx-auto h-full flex items-center justify-between relative">
-                <div class="logo-area w-[180px] flex-shrink-0 flex items-center pl-6">
-                    <img src="./logo.png" class="h-6 w-auto object-contain">
+                <div class="logo-area w-[180px] flex-shrink-0 flex items-center pl-6 cursor-pointer group" onclick="resetAll()">
+                    <img src="./logo.png" class="h-6 w-auto object-contain opacity-100 transition-opacity group-hover:opacity-80">
                 </div>
 
                 <div class="flex-1 flex justify-center overflow-x-auto hide-scroll h-full items-center nav-center-layout" id="topBrandNav">
@@ -134,7 +137,7 @@
         </div>
 
         <div class="h-12 bg-white">
-            <div class="max-w-4xl mx-auto h-full flex items-center overflow-x-auto hide-scroll timeline-container" id="timelineContainer">
+            <div class="max-w-4xl mx-auto h-full flex items-center justify-center overflow-x-auto hide-scroll timeline-center-layout" id="timelineContainer">
                 </div>
         </div>
     </div>
@@ -142,8 +145,9 @@
     <main class="flex-1 w-full max-w-4xl mx-auto px-6 pb-20">
         <div id="contentFeed"></div>
         
-        <footer class="mt-16 pt-12 border-t border-gray-50 text-center text-[10px] text-gray-300 font-mono tracking-widest uppercase">
-            Internal Intelligence System
+        <footer class="mt-16 pt-12 border-t border-gray-50 text-center text-gray-400">
+            <div class="text-[10px] font-mono tracking-widest uppercase mb-2">Internal Intelligence System</div>
+            <div class="text-[10px] font-medium text-gray-300">Design by Stone</div>
         </footer>
     </main>
 
@@ -157,10 +161,35 @@
             Papa.parse(GOOGLE_SHEET_CSV_URL, {
                 download: true, header: true, skipEmptyLines: true,
                 complete: (res) => {
-                    rawData = res.data.map(r => ({
-                        week: r['周期']||r['Week']||'', date: r['日期']||'', brand: r['竞品品牌']||'', 
-                        dim: r['追踪维度（单选）']||'', fact: r['事实描述']||'', analysis: r['分析']||'', link: r['信息源']||''
-                    })).filter(i => i.brand && i.fact);
+                    rawData = res.data.map(r => {
+                        // 1. 数据清洗：品牌修正
+                        let brandName = r['竞品品牌']||r['Brand']||'';
+                        if (brandName === '华三') brandName = '新华三'; // 强制修正
+                        
+                        // 2. 数据清洗：日期格式化 (处理时间戳)
+                        let dateStr = r['日期']||r['Date']||'';
+                        // 如果全是数字且长度大于8 (假设是毫秒时间戳)
+                        if (/^\d{8,}$/.test(dateStr)) {
+                            const dateObj = new Date(parseInt(dateStr));
+                            if (!isNaN(dateObj.getTime())) {
+                                const y = dateObj.getFullYear();
+                                const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+                                const d = String(dateObj.getDate()).padStart(2, '0');
+                                dateStr = `${y}-${m}-${d}`;
+                            }
+                        }
+
+                        return {
+                            week: r['周期']||r['Week']||'', 
+                            date: dateStr, 
+                            brand: brandName, 
+                            dim: r['追踪维度（单选）']||'', 
+                            fact: r['事实描述']||'', 
+                            analysis: r['分析']||'', 
+                            link: r['信息源']||''
+                        };
+                    }).filter(i => i.brand && i.fact);
+                    
                     initApp();
                 }
             });
@@ -168,22 +197,29 @@
 
         function initApp() {
             document.getElementById('loading').style.display = 'none';
-            
+            renderNavs();
+            renderFeed();
+        }
+
+        // 渲染导航栏 (拆分出来方便重置)
+        function renderNavs() {
             // 1. 品牌导航
             const brands = ['All', ...new Set(rawData.map(i => i.brand))];
             const navContainer = document.getElementById('topBrandNav');
+            navContainer.innerHTML = ''; // 清空
             
             brands.forEach((brand, index) => {
                 const div = document.createElement('div');
-                div.className = `nav-tab ${index === 0 ? 'active' : ''}`;
-                div.textContent = brand;
+                // 如果是 'All' 且当前是 'all'，或者具体品牌匹配
+                const isActive = (brand === 'All' && currentBrandFilter === 'all') || (brand === currentBrandFilter);
+                div.className = `nav-tab ${isActive ? 'active' : ''}`;
+                div.textContent = brand === 'All' ? '全部品牌' : brand; // 汉化
                 div.onclick = function(e) {
-                    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-                    this.classList.add('active');
-                    e.target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
                     currentBrandFilter = brand === 'All' ? 'all' : brand;
+                    renderNavs(); // 重新渲染以更新 active 状态
                     renderFeed();
                     window.scrollTo({ top: 0, behavior: 'smooth' });
+                    e.target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
                 };
                 navContainer.appendChild(div);
             });
@@ -191,21 +227,20 @@
             // 2. 时间轴
             const weeks = [...new Set(rawData.map(i => i.week))].sort().reverse();
             const tlContainer = document.getElementById('timelineContainer');
+            tlContainer.innerHTML = ''; // 清空
 
-            // All Time
-            addTimelineItem(tlContainer, 'All Time', 'all', true);
+            // 全部按钮
+            addTimelineItem(tlContainer, '全部', 'all', currentWeekFilter === 'all');
             
             // 分隔线
             const divider = document.createElement('div');
             divider.className = "h-4 w-px bg-gray-200 mx-2 flex-shrink-0";
             tlContainer.appendChild(divider);
 
-            // 周次
+            // 周次按钮
             weeks.forEach(week => {
-                addTimelineItem(tlContainer, week, week, false);
+                addTimelineItem(tlContainer, week, week, currentWeekFilter === week);
             });
-
-            renderFeed();
         }
 
         function addTimelineItem(container, text, value, isActive) {
@@ -213,14 +248,22 @@
             btn.className = `timeline-item ${isActive ? 'active' : ''}`;
             btn.textContent = text;
             btn.onclick = function(e) {
-                document.querySelectorAll('.timeline-item').forEach(t => t.classList.remove('active'));
-                this.classList.add('active');
-                e.target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
                 currentWeekFilter = value;
+                renderNavs(); // 更新选中态
                 renderFeed();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
+                e.target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
             };
             container.appendChild(btn);
+        }
+
+        // 重置所有筛选 (Logo点击触发)
+        function resetAll() {
+            currentBrandFilter = 'all';
+            currentWeekFilter = 'all';
+            renderNavs();
+            renderFeed();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function renderFeed() {
@@ -233,34 +276,27 @@
             container.innerHTML = '';
 
             if (filtered.length === 0) {
-                container.innerHTML = `<div class="py-32 text-center text-gray-300 text-sm font-mono">No intelligence found.</div>`;
+                container.innerHTML = `<div class="py-32 text-center text-gray-300 text-sm font-mono">暂无相关情报数据</div>`;
                 return;
             }
 
             const groups = filtered.reduce((acc, curr) => { (acc[curr.week] = acc[curr.week] || []).push(curr); return acc; }, {});
             
             Object.keys(groups).sort().reverse().forEach((week, idx) => {
-                
-                // 🟢 核心修改逻辑：
-                // 如果当前筛选是 "All Time"，则显示周标题（作为分隔符）。
-                // 如果当前筛选是 "具体某周"（例如47周），则不显示标题，直接展示内容。
                 if (currentWeekFilter === 'all') {
                     const header = document.createElement('div');
                     header.className = `py-3 mb-4 border-b border-gray-100 text-[11px] font-bold text-gray-400 uppercase tracking-widest ${idx > 0 ? 'mt-12' : 'mt-6'}`;
                     header.textContent = week;
                     container.appendChild(header);
-                } else {
-                    // 如果选了具体某周，给顶部加一点点留白即可，不要文字
-                    if(idx === 0) {
-                        const spacer = document.createElement('div');
-                        spacer.className = "mt-8";
-                        container.appendChild(spacer);
-                    }
+                } else if (idx === 0) {
+                     const spacer = document.createElement('div');
+                     spacer.className = "mt-8";
+                     container.appendChild(spacer);
                 }
 
                 groups[week].forEach(item => {
                     let tagClass = 'tag-gray';
-                    const dim = item.dim;
+                    const dim = item.dim || '';
                     if (dim.includes('市场') || dim.includes('营销')) tagClass = 'tag-market';
                     else if (dim.includes('产品') || dim.includes('技术')) tagClass = 'tag-product';
                     else if (dim.includes('战略') || dim.includes('公司')) tagClass = 'tag-strategy';
