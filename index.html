@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Competitor Intelligence | Odin</title>
+    
+    <link rel="icon" href="./logo.png" type="image/png">
+    <link rel="apple-touch-icon" href="./logo.png">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -72,7 +76,7 @@
             color: #2563eb; 
         }
 
-        /* === 列表布局 (PC默认) === */
+        /* === 列表布局 === */
         .feed-item {
             display: grid;
             grid-template-columns: 140px 1fr; 
@@ -82,32 +86,25 @@
         }
         .feed-item:last-child { border-bottom: none; }
 
-        /* === 📱 手机端核心适配 === */
+        /* === 布局控制类 === */
+        .nav-center-layout { justify-content: center; }
+        .timeline-center-layout { justify-content: center; }
+
+        /* === 手机端适配 === */
         @media (max-width: 768px) {
-            /* 1. 调整 Logo 区域：不隐藏，而是变小，确保可以点击重置 */
+            .nav-center-layout { justify-content: flex-start !important; padding-left: 4px; }
+            .timeline-center-layout { justify-content: flex-start !important; padding-left: 16px; padding-right: 16px; }
             .logo-area { 
                 width: auto !important; 
                 padding-left: 16px !important; 
                 padding-right: 12px;
-                border-right: 1px solid #f3f4f6; /* 加个分割线更好看 */
-                margin-right: 4px;
+                border-right: 1px solid #f3f4f6; 
+                margin-right: 8px; 
             }
-            
-            /* 2. 隐藏右侧占位符，给导航腾空间 */
             .spacer-area { display: none; }
-            
-            /* 3. 导航栏左对齐，而不是居中 */
-            .nav-center-layout { justify-content: flex-start; }
-            
-            /* 4. 调整导航项间距 */
-            .nav-tab { font-size: 0.95rem; margin-right: 20px; margin-left: 8px; }
+            .nav-tab { font-size: 0.95rem; margin: 0 16px 0 0; }
             .nav-tab.active::after { bottom: -12px; }
-            
-            /* 5. 列表内容垂直堆叠 */
             .feed-item { grid-template-columns: 1fr; gap: 12px; padding: 24px 0; }
-            
-            /* 6. 时间轴靠左，方便滑动 */
-            .timeline-center-layout { justify-content: flex-start !important; padding-left: 16px; padding-right: 16px; }
         }
 
         /* 标签颜色 */
@@ -127,7 +124,6 @@
 
         #loading { position: fixed; inset: 0; background:white; z-index: 100; display: flex; justify-content: center; align-items: center; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
         .hide-scroll::-webkit-scrollbar { display: none; }
     </style>
@@ -145,7 +141,7 @@
                     <img src="./logo.png" class="h-6 w-auto object-contain opacity-100 transition-opacity group-hover:opacity-80">
                 </div>
 
-                <div class="flex-1 flex justify-center overflow-x-auto hide-scroll h-full items-center nav-center-layout" id="topBrandNav">
+                <div class="flex-1 flex overflow-x-auto hide-scroll h-full items-center nav-center-layout" id="topBrandNav">
                     </div>
 
                 <div class="spacer-area w-[180px] flex-shrink-0"></div>
@@ -153,7 +149,7 @@
         </div>
 
         <div class="h-12 bg-white">
-            <div class="max-w-4xl mx-auto h-full flex items-center justify-center overflow-x-auto hide-scroll timeline-center-layout" id="timelineContainer">
+            <div class="max-w-4xl mx-auto h-full flex items-center overflow-x-auto hide-scroll timeline-center-layout" id="timelineContainer">
                 </div>
         </div>
     </div>
@@ -182,7 +178,7 @@
                         let brandName = r['竞品品牌']||r['Brand']||'';
                         if (brandName === '华三') brandName = '新华三'; 
                         
-                        // 2. 日期清洗
+                        // 2. 日期格式化
                         let dateStr = r['日期']||r['Date']||'';
                         if (/^\d{8,}$/.test(dateStr)) {
                             const dateObj = new Date(parseInt(dateStr));
@@ -226,7 +222,7 @@
                 const div = document.createElement('div');
                 const isActive = (brand === 'All' && currentBrandFilter === 'all') || (brand === currentBrandFilter);
                 div.className = `nav-tab ${isActive ? 'active' : ''}`;
-                div.textContent = brand === 'All' ? '全部品牌' : brand; 
+                div.textContent = brand === 'All' ? '全部' : brand; 
                 div.onclick = function(e) {
                     currentBrandFilter = brand === 'All' ? 'all' : brand;
                     renderNavs(); 
@@ -242,12 +238,15 @@
             const tlContainer = document.getElementById('timelineContainer');
             tlContainer.innerHTML = ''; 
 
+            // 全部按钮
             addTimelineItem(tlContainer, '全部', 'all', currentWeekFilter === 'all');
             
+            // 分隔线
             const divider = document.createElement('div');
             divider.className = "h-4 w-px bg-gray-200 mx-2 flex-shrink-0";
             tlContainer.appendChild(divider);
 
+            // 周次按钮
             weeks.forEach(week => {
                 addTimelineItem(tlContainer, week, week, currentWeekFilter === week);
             });
