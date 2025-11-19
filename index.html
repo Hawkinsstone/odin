@@ -22,7 +22,7 @@
 
         /* === 第一排：品牌导航 (Tab) === */
         .nav-tab {
-            font-size: 0.95rem; 
+            font-size: 0.9rem; 
             color: #888;
             cursor: pointer;
             transition: all 0.2s;
@@ -38,20 +38,20 @@
         .nav-tab.active::after {
             content: '';
             position: absolute;
-            bottom: -18px; /* 调整下划线位置 */
+            bottom: -18px;
             left: 0;
             width: 100%;
             height: 2px;
             background-color: #000;
         }
 
-        /* === 第二排：周期导航 (Pill/Chip) === */
+        /* === 第二排：周期导航 (Tag Style) === */
         .week-tab {
-            font-size: 0.85rem;
-            padding: 6px 16px;
-            border-radius: 999px; /* 胶囊形状 */
-            background-color: #f5f5f5;
-            color: #666;
+            font-size: 0.75rem; /* 12px */
+            padding: 4px 12px;
+            border-radius: 6px;
+            background-color: #f3f4f6;
+            color: #6b7280;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
@@ -59,12 +59,15 @@
             flex-shrink: 0;
             border: 1px solid transparent;
         }
-        .week-tab:hover { background-color: #e5e5e5; }
+        .week-tab:hover { 
+            background-color: #e5e7eb; 
+            color: #374151; 
+        }
         .week-tab.active {
-            background-color: #1a1a1a; /* 选中变黑 */
-            color: #fff;
+            background-color: #eff6ff; /* 选中蓝底 */
+            color: #1d4ed8;        /* 选中蓝字 */
+            border-color: #bfdbfe;
             font-weight: 600;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
         }
 
         /* === 列表布局 === */
@@ -79,18 +82,17 @@
 
         /* === 手机端适配 === */
         @media (max-width: 768px) {
-            /* 头部布局调整 */
-            .header-wrapper { padding: 0 16px; }
-            
-            .logo-area { display: none; } /* 手机端隐藏 Logo 以节省空间，或保留看您需求 */
+            /* 隐藏左侧 Logo 区域占位，让导航靠左 */
+            .logo-area { display: none; } 
+            /* 导航左对齐 */
             .nav-center-layout { justify-content: flex-start; }
-            
-            /* 品牌导航左对齐 */
+            /* 导航项间距调整 */
             .nav-tab { margin: 0 20px 0 0; font-size: 1rem; }
             .nav-tab.active::after { bottom: -10px; }
-
-            /* 列表变为垂直 */
+            /* 列表垂直堆叠 */
             .feed-item { grid-template-columns: 1fr; gap: 12px; padding: 24px 0; }
+            /* 顶部内边距 */
+            .header-inner { padding: 0 16px; }
         }
 
         /* 标签颜色 */
@@ -111,7 +113,6 @@
         #loading { position: fixed; inset: 0; background:white; z-index: 100; display: flex; justify-content: center; align-items: center; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         
-        /* 隐藏滚动条但支持滑动 */
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
         .hide-scroll::-webkit-scrollbar { display: none; }
     </style>
@@ -120,23 +121,24 @@
 
     <div id="loading"><div class="w-5 h-5 border-2 border-gray-100 border-t-black rounded-full animate-spin"></div></div>
 
-    <div class="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+    <div class="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)]">
         
         <div class="h-14 border-b border-gray-50">
-            <div class="max-w-4xl mx-auto h-full px-6 flex items-center justify-between nav-center-layout relative">
+            <div class="max-w-4xl mx-auto h-full px-6 flex items-center justify-between nav-center-layout relative header-inner">
+                
                 <div class="logo-area w-32 flex-shrink-0 flex items-center">
                     <img src="./logo.png" class="h-6 w-auto object-contain">
                 </div>
 
-                <div class="flex-1 flex justify-center overflow-x-auto hide-scroll h-full items-center" id="topBrandNav">
+                <div class="flex-1 flex justify-center overflow-x-auto hide-scroll h-full items-center px-8" id="topBrandNav">
                     </div>
 
                 <div class="logo-area w-32 flex-shrink-0"></div>
             </div>
         </div>
 
-        <div class="h-14 bg-white">
-            <div class="max-w-4xl mx-auto h-full px-6 flex items-center overflow-x-auto hide-scroll gap-3" id="weekNavContainer">
+        <div class="h-12 bg-white/80">
+            <div class="max-w-4xl mx-auto h-full px-6 flex items-center overflow-x-auto hide-scroll gap-2 header-inner" id="weekNavContainer">
                 </div>
         </div>
     </div>
@@ -171,7 +173,7 @@
         function initApp() {
             document.getElementById('loading').style.display = 'none';
             
-            // 1. 初始化品牌导航 (第一排)
+            // 1. 第一排：品牌导航
             const brands = ['All', ...new Set(rawData.map(i => i.brand))];
             const navContainer = document.getElementById('topBrandNav');
             
@@ -180,13 +182,9 @@
                 div.className = `nav-tab ${index === 0 ? 'active' : ''}`;
                 div.textContent = brand;
                 div.onclick = function(e) {
-                    // 样式切换
                     document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
                     this.classList.add('active');
-                    // 滚动居中
                     e.target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-                    
-                    // 逻辑处理
                     currentBrandFilter = brand === 'All' ? 'all' : brand;
                     renderFeed();
                     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -194,13 +192,11 @@
                 navContainer.appendChild(div);
             });
 
-            // 2. 初始化周期导航 (第二排) - 新增逻辑
+            // 2. 第二排：周期导航
             const weeks = [...new Set(rawData.map(i => i.week))].sort().reverse();
             const weekContainer = document.getElementById('weekNavContainer');
 
-            // 添加“全部”按钮
             addWeekButton(weekContainer, '全部周期', 'all', true);
-            // 添加各个周按钮
             weeks.forEach(week => {
                 addWeekButton(weekContainer, week, week, false);
             });
@@ -208,19 +204,14 @@
             renderFeed();
         }
 
-        // 辅助函数：生成周按钮
         function addWeekButton(container, text, value, isActive) {
             const btn = document.createElement('div');
             btn.className = `week-tab ${isActive ? 'active' : ''}`;
             btn.textContent = text;
             btn.onclick = function(e) {
-                // 样式切换
                 document.querySelectorAll('.week-tab').forEach(t => t.classList.remove('active'));
                 this.classList.add('active');
-                // 滚动居中
                 e.target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-
-                // 逻辑处理
                 currentWeekFilter = value;
                 renderFeed();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -238,25 +229,20 @@
             container.innerHTML = '';
 
             if (filtered.length === 0) {
-                container.innerHTML = `<div class="py-32 text-center text-gray-300 text-sm font-mono">No intelligence found for this selection.</div>`;
+                container.innerHTML = `<div class="py-32 text-center text-gray-300 text-sm font-mono">No intelligence found.</div>`;
                 return;
             }
 
-            // 按周分组
             const groups = filtered.reduce((acc, curr) => { (acc[curr.week] = acc[curr.week] || []).push(curr); return acc; }, {});
             
-            // 如果用户选了特定周，groups 里其实只有那一周的数据
             Object.keys(groups).sort().reverse().forEach((week, idx) => {
-                
-                // 只有在显示“全部周期”时，才需要显示周标题分隔符
-                // 如果用户只选了“47周”，那满屏都是47周，不需要分隔符，直接显示卡片更干净
+                // 如果筛选了全部周期，显示分割线
                 if (currentWeekFilter === 'all') {
                     const header = document.createElement('div');
                     header.className = `py-3 mb-4 border-b border-gray-100 text-[11px] font-bold text-gray-400 uppercase tracking-widest ${idx > 0 ? 'mt-12' : 'mt-6'}`;
                     header.textContent = week;
                     container.appendChild(header);
                 } else if (idx === 0) {
-                     // 如果选了特定周，加一点顶部间距
                      const spacer = document.createElement('div');
                      spacer.className = "mt-6";
                      container.appendChild(spacer);
