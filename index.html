@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>竞品追踪周报 | 动态更新版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .tag-strategy { background-color: #e0e7ff; color: #3730a3; }
+        .tag-product { background-color: #dcfce7; color: #166534; }
+        .tag-market { background-color: #ffedd5; color: #9a3412; }
+        .brand-badge { font-weight: bold; border-radius: 4px; padding: 2px 6px; font-size: 0.75rem; }
+        #loading { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); display:flex; justify-content:center; align-items:center; z-index:100; }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div id="loading">
+        <div class="text-center">
+            <div class="text-2xl font-bold text-blue-600 mb-2">正在加载最新数据...</div>
+            <div class="text-gray-500 text-sm">正在同步在线表格</div>
+        </div>
+    </div>
+
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center">
+                <div class="bg-blue-600 text-white font-bold p-2 rounded mr-3">CI</div>
+                <h1 class="text-xl font-bold text-gray-900">竞品追踪周报 <span id="dateRange" class="text-sm font-normal text-gray-500 ml-2"></span></h1>
+            </div>
+            <div class="text-sm text-gray-500" id="updateTime"></div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-lg font-semibold mb-4 text-gray-700 border-l-4 border-blue-500 pl-3">品牌活跃度</h3>
+                <div class="h-64"><canvas id="brandChart"></canvas></div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-lg font-semibold mb-4 text-gray-700 border-l-4 border-green-500 pl-3">追踪维度分布</h3>
+                <div class="h-64"><canvas id="dimensionChart"></canvas></div>
+            </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-lg shadow mb-6 flex flex-wrap gap-4 items-center sticky top-16 z-40 border-t border-gray-100">
+            <span class="font-semibold text-gray-700">筛选:</span>
+            <select id="weekFilter" onchange="renderCards()" class="border p-2 rounded text-sm"><option value="all">所有周期</option></select>
+            <select id="brandFilter" onchange="renderCards()" class="border p-2 rounded text-sm"><option value="all">所有品牌</option></select>
+            <select id="typeFilter" onchange="renderCards()" class="border p-2 rounded text-sm">
+                <option value="all">所有维度</option>
+                <option value="产品与技术">产品与技术</option>
+                <option value="市场与营销">市场与营销</option>
+                <option value="公司与战略">公司与战略</option>
+            </select>
+            <div class="ml-auto text-sm text-gray-500">共 <span id="countDisplay" class="font-bold text-blue-600">0</span> 条情报</div>
+        </div>
+
+        <div id="contentFeed" class="grid grid-cols-1 gap-6"></div>
+    </main>
+
+    <script>
+        // ==========================================
+        // 🔴 配置区域：请把这里换成你的 Google Sheet CSV 链接 🔴
+        // ==========================================
+        const GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQaMGLg6oywVOXK5pzu6b0-tca0xpMBjGue3S1Gn-BG7A7G1IAXmXRC308eRRB0TOw-FqRjB2vq0ftG/pubhtml"; 
+        // 示例链接格式类似: https://docs.google.com/spreadsheets/d/e/2PACX-xxxx/pub?output=csv
+        // 如果你先想测试效果，可以暂时保留空，我会加载默认演示数据
+        // ==========================================
+
+        let rawData = [];
+
+        // 1. 数据加载与映射
+        function loadData() {
+            if (!GOOGLE_SHEET_CSV_URL || GOOGLE_SHEET_CSV_URL.includes("填在这里")) {
+                // 如果没有填链接，使用演示数据（这里为了代码简洁，不重复放演示数据，直接提示用户）
+                alert("请在 HTML 代码第 66 行填入您的 Google Sheet CSV 链接！\n目前将加载空状态。");
+                document.getElementById('loading').style.display = 'none';
+                return;
+            }
+
+            Papa.parse(GOOGLE_SHEET_CSV_URL, {
+                download: true,
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    // 数据映射：把中文表头转为代码需要的英文 Key
+                    rawData = results.data.map(row => ({
+                        week: row['周期'] || row['Week'] || '未知',
+                        date: row['日期'] || row['Date'] || '',
+                        brand: row['竞品品牌'] || row['Brand'] || '其他',
+                        dim: row['追踪维度（单选）'] || row['Dimension'] || '其他',
+                        fact: row['事实描述'] || row['Fact'] || '无描述',
+                        analysis: row['分析'] || row['Analysis'] || '',
+                        link: row['信息源'] || row['Link'] || ''
+                    })).filter(item => item.brand && item.fact); // 过滤掉无效行
+
+                    initApp();
+                },
+                error: function(err) {
+                    alert("数据加载失败，请检查链接是否正确或网络是否通畅。");
+                    console.error(err);
+                }
+            });
+        }
+
+        // 2. 初始化应用
+        function initApp() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('updateTime').textContent = "数据更新至: " + new Date().toLocaleDateString();
+
+            // 填充筛选器
+            const weeks = [...new Set(rawData.map(i => i.week))].sort().reverse();
+            const brands = [...new Set(rawData.map(i => i.brand))];
+            
+            const wSelect = document.getElementById('weekFilter');
+            weeks.forEach(w => wSelect.add(new Option(w, w)));
+            
+            const bSelect = document.getElementById('brandFilter');
+            brands.forEach(b => bSelect.add(new Option(b, b)));
+
+            renderCharts();
+            renderCards();
+        }
+
+        // 3. 渲染图表 (与之前逻辑相同)
+        function renderCharts() {
+            const brandCounts = {};
+            rawData.forEach(i => brandCounts[i.brand] = (brandCounts[i.brand] || 0) + 1);
+            const dimCounts = {};
+            rawData.forEach(i => dimCounts[i.dim] = (dimCounts[i.dim] || 0) + 1);
+
+            new Chart(document.getElementById('brandChart'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(brandCounts),
+                    datasets: [{ label: '提及次数', data: Object.values(brandCounts), backgroundColor: '#3b82f6', borderRadius: 4 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+
+            new Chart(document.getElementById('dimensionChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(dimCounts),
+                    datasets: [{ data: Object.values(dimCounts), backgroundColor: ['#dcfce7', '#ffedd5', '#e0e7ff'], borderWidth: 0 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+            });
+        }
+
+        // 4. 渲染卡片 (与之前逻辑相同)
+        function renderCards() {
+            const weekVal = document.getElementById('weekFilter').value;
+            const brandVal = document.getElementById('brandFilter').value;
+            const typeVal = document.getElementById('typeFilter').value;
+            const container = document.getElementById('contentFeed');
+            container.innerHTML = '';
+
+            const filtered = rawData.filter(item => 
+                (weekVal === 'all' || item.week === weekVal) &&
+                (brandVal === 'all' || item.brand === brandVal) &&
+                (typeVal === 'all' || item.dim === typeVal)
+            );
+
+            document.getElementById('countDisplay').textContent = filtered.length;
+
+            // 分组逻辑
+            const groups = filtered.reduce((acc, curr) => { (acc[curr.week] = acc[curr.week] || []).push(curr); return acc; }, {});
+            Object.keys(groups).sort().reverse().forEach(week => {
+                const header = document.createElement('div');
+                header.className = "flex items-center space-x-2 mt-4 mb-2";
+                header.innerHTML = `<span class="bg-gray-800 text-white px-3 py-1 rounded-full text-sm font-bold">${week}</span><div class="h-px bg-gray-300 flex-grow"></div>`;
+                container.appendChild(header);
+
+                const grid = document.createElement('div');
+                grid.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
+                groups[week].forEach(item => {
+                    let brandColor = 'bg-gray-100 text-gray-600';
+                    if(['华为','新华三'].some(k=>item.brand.includes(k))) brandColor = 'bg-red-50 text-red-600';
+                    else if(['腾讯','浪潮'].some(k=>item.brand.includes(k))) brandColor = 'bg-blue-50 text-blue-600';
+                    else if(['阿里','金智'].some(k=>item.brand.includes(k))) brandColor = 'bg-orange-50 text-orange-600';
+                    
+                    let dimClass = item.dim.includes('战略') ? 'tag-strategy' : (item.dim.includes('产品') ? 'tag-product' : 'tag-market');
+                    
+                    const linkHtml = item.link ? `<a href="${item.link}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm font-medium mt-auto pt-4 flex items-center">查看详情 &rarr;</a>` : '';
+
+                    const card = document.createElement('div');
+                    card.className = "bg-white rounded-lg shadow p-5 flex flex-col card-hover border border-gray-100";
+                    card.innerHTML = `
+                        <div class="flex justify-between mb-3"><span class="brand-badge ${brandColor}">${item.brand}</span><span class="text-xs px-2 py-1 rounded ${dimClass}">${item.dim}</span></div>
+                        <h4 class="font-bold text-gray-900 mb-2 line-clamp-2">${item.fact}</h4>
+                        <div class="bg-gray-50 p-3 rounded text-sm text-gray-600 mb-2"><span class="font-bold">分析:</span> ${item.analysis}</div>
+                        ${linkHtml}
+                    `;
+                    grid.appendChild(card);
+                });
+                container.appendChild(grid);
+            });
+        }
+
+        // 启动加载
+        loadData();
+    </script>
+</body>
+</html>
