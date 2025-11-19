@@ -41,7 +41,7 @@
         .nav-tab.active::after {
             content: '';
             position: absolute;
-            bottom: -20px;
+            bottom: -20px; /* Web端下划线位置 */
             left: 0;
             width: 100%;
             height: 2px;
@@ -82,16 +82,29 @@
         }
         .feed-item:last-child { border-bottom: none; }
 
-        /* === 布局控制 === */
-        .nav-center-layout { justify-content: center; }
-        .timeline-center-layout { justify-content: center; }
+        /* === 布局控制 (Web Fix) === */
         .header-inner { height: 100%; display: flex; align-items: center; justify-content: space-between; }
+        
+        /* PC端: Logo和占位符宽度，适当缩小以防挤压导航 */
+        .logo-placeholder-width { width: 140px; } 
 
-        /* === 手机端深度适配 === */
+        /* PC端: 导航容器布局 */
+        .pc-nav-container {
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            height: 100%;
+            align-items: center;
+            /* 关键: 使用 safe center 保证溢出时左对齐，未溢出时居中 */
+            justify-content: center; 
+        }
+
+        /* === 📱 手机端深度适配 === */
         @media (max-width: 768px) {
             .header-wrapper { height: auto !important; border-bottom: none; }
             .header-inner { flex-direction: column; height: auto; padding: 0; }
             
+            /* 1. Logo: 第一行居中 */
             .logo-area { 
                 width: 100% !important; 
                 justify-content: center !important; 
@@ -100,17 +113,20 @@
                 margin-bottom: 4px;
             }
             
-            .nav-center-layout { 
+            /* 2. 品牌导航: 第二行靠左 */
+            .pc-nav-container { 
                 width: 100%; 
-                justify-content: flex-start !important; 
+                justify-content: flex-start !important; /* 强制靠左 */
                 padding: 0 16px !important;
                 overflow-x: auto;
             }
-            .nav-tab { margin: 0 24px 0 0; font-size: 0.95rem; padding: 8px 0; }
-            .nav-tab.active::after { bottom: 0px; }
+            .nav-tab { margin: 0 20px 0 0; font-size: 0.95rem; padding: 8px 0; }
+            .nav-tab.active::after { bottom: 0px; } /* 手机端下划线紧贴 */
             
+            /* 3. 隐藏右侧占位 */
             .spacer-area { display: none; }
 
+            /* 4. 时间轴: 第三行靠左 */
             .timeline-container-mobile { border-top: 1px solid #f9fafb; }
             .timeline-center-layout { 
                 justify-content: flex-start !important; 
@@ -141,16 +157,16 @@
     <div class="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100">
         
         <div class="h-16 border-b border-gray-50 header-wrapper">
-            <div class="max-w-4xl mx-auto header-inner relative">
+            <div class="max-w-6xl mx-auto header-inner relative">
                 
-                <div class="logo-area w-[180px] flex-shrink-0 flex items-center pl-6 cursor-pointer group" onclick="resetAll()">
+                <div class="logo-area logo-placeholder-width flex-shrink-0 flex items-center pl-6 cursor-pointer group" onclick="resetAll()">
                     <img src="./logo.png" class="h-6 w-auto object-contain opacity-100 transition-opacity group-hover:opacity-80">
                 </div>
 
-                <div class="flex-1 flex overflow-x-auto hide-scroll h-full items-center nav-center-layout" id="topBrandNav">
+                <div class="pc-nav-container hide-scroll" id="topBrandNav">
                     </div>
 
-                <div class="spacer-area w-[180px] flex-shrink-0"></div>
+                <div class="spacer-area logo-placeholder-width flex-shrink-0"></div>
             </div>
         </div>
 
@@ -311,7 +327,6 @@
                     else if (dim.includes('产品') || dim.includes('技术')) tagClass = 'tag-product';
                     else if (dim.includes('战略') || dim.includes('公司')) tagClass = 'tag-strategy';
 
-                    // ✅ 文案已修改为 Read More
                     const linkHtml = item.link ? 
                         `<a href="${item.link}" target="_blank" class="inline-flex items-center gap-1 text-xs font-semibold text-gray-900 hover:text-blue-600 transition-colors mt-4 border-b border-black hover:border-blue-600 pb-px">
                             Read More ↗
