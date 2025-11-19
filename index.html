@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Competitor Intelligence | Odin</title>
     
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23FF8C00'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial, sans-serif' font-size='60' fill='%23FFFFFF' text-anchor='middle' dominant-baseline='central'%3EO%3C/text%3E%3C/svg%3E" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23FF8C00'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial, sans-serif' font-size='60' fill='%23FFFFFF' text-anchor='middle' dominant-baseline='central'%3EO%3C/text%3E%3C/svg%3E">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='10' fill='%23f97316'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial, sans-serif' font-weight='bold' font-size='60' fill='%23FFFFFF' text-anchor='middle' dominant-baseline='central'%3EO%3C/text%3E%3C/svg%3E" type="image/svg+xml">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,7 +23,7 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* === 第一排：品牌导航 (Tab) === */
+        /* === 品牌导航 (Tab) === */
         .nav-tab {
             font-size: 0.9rem; 
             color: #888;
@@ -42,14 +41,14 @@
         .nav-tab.active::after {
             content: '';
             position: absolute;
-            bottom: -20px;
+            bottom: -20px; /* PC端下划线位置 */
             left: 0;
             width: 100%;
             height: 2px;
             background-color: #000;
         }
 
-        /* === 第二排：时间轴滑动条 (Timeline) === */
+        /* === 时间轴滑动条 (Timeline) === */
         .timeline-item {
             font-size: 0.75rem; 
             color: #9ca3af; 
@@ -64,16 +63,13 @@
             flex-shrink: 0;
         }
         .timeline-item:hover { color: #374151; }
-        
         .timeline-item.active {
             color: #000;
             font-weight: 700;
             background-color: #f3f4f6;
         }
         .timeline-item.active::before {
-            content: '•';
-            margin-right: 6px;
-            color: #2563eb; 
+            content: '•'; margin-right: 6px; color: #2563eb; 
         }
 
         /* === 列表布局 === */
@@ -86,49 +82,61 @@
         }
         .feed-item:last-child { border-bottom: none; }
 
-        /* === 布局控制类 === */
-        .nav-center-layout { 
-            justify-content: center; 
-            justify-content: safe center; 
-        }
-        .timeline-center-layout { 
-            justify-content: center; 
-            justify-content: safe center; 
-        }
+        /* === 布局控制 === */
+        .nav-center-layout { justify-content: center; }
+        .timeline-center-layout { justify-content: center; }
+        .header-inner { height: 100%; display: flex; align-items: center; justify-content: space-between; }
 
-        /* === 手机端适配 === */
+        /* === 📱 手机端深度适配 (核心逻辑) === */
         @media (max-width: 768px) {
-            .logo-area { display: none; } 
-            .spacer-area { display: none; }
-            
-            .nav-center-layout { 
-                justify-content: flex-start !important; 
-                padding-left: 24px !important; 
-                padding-right: 24px;
+            /* 1. 头部容器变为自动高度，允许内容堆叠 */
+            .header-wrapper { height: auto !important; border-bottom: none; }
+            .header-inner { 
+                flex-direction: column; /* 垂直排列 */
+                height: auto; 
+                padding: 0; 
             }
             
-            .nav-tab { font-size: 1rem; margin-right: 24px; margin-left: 0; }
-            .nav-tab.active::after { bottom: -12px; }
+            /* 2. Logo 区域：第一行，居中，带底部分割线 */
+            .logo-area { 
+                width: 100% !important; /* 占满全宽 */
+                justify-content: center !important; /* 居中 */
+                padding: 12px 0 !important; /* 增加点击区域 */
+                border-bottom: 1px solid #f9fafb;
+                margin-bottom: 4px;
+            }
             
-            .feed-item { grid-template-columns: 1fr; gap: 12px; padding: 24px 0; }
+            /* 3. 品牌导航：第二行，靠左滑动 */
+            .nav-center-layout { 
+                width: 100%; 
+                justify-content: flex-start !important; 
+                padding: 0 16px !important;
+                overflow-x: auto;
+            }
+            .nav-tab { 
+                margin: 0 24px 0 0; 
+                font-size: 0.95rem; 
+                padding: 8px 0; /* 增加手指点击面积 */
+            }
+            .nav-tab.active::after { bottom: 0px; } /* 修正手机端下划线位置 */
             
+            /* 4. 隐藏右侧占位符 */
+            .spacer-area { display: none; }
+
+            /* 5. 时间轴：第三行，靠左滑动 */
+            .timeline-container-mobile { border-top: 1px solid #f9fafb; }
             .timeline-center-layout { 
                 justify-content: flex-start !important; 
-                padding-left: 24px !important; 
-                padding-right: 24px; 
+                padding-left: 16px !important; 
+                padding-right: 16px; 
             }
+
+            /* 6. 内容流 */
+            .feed-item { grid-template-columns: 1fr; gap: 12px; padding: 24px 0; }
         }
 
         /* 标签颜色 */
-        .tag {
-            display: inline-block;
-            padding: 3px 8px;
-            font-size: 10px;
-            font-weight: 600;
-            border-radius: 4px;
-            letter-spacing: 0.02em;
-            white-space: nowrap;
-        }
+        .tag { display: inline-block; padding: 3px 8px; font-size: 10px; font-weight: 600; border-radius: 4px; white-space: nowrap; }
         .tag-gray { background: #f3f4f6; color: #4b5563; }
         .tag-market { background: #fff7ed; color: #c2410c; }
         .tag-product { background: #eff6ff; color: #1d4ed8; }
@@ -146,8 +154,8 @@
 
     <div class="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100">
         
-        <div class="h-16 border-b border-gray-50">
-            <div class="max-w-4xl mx-auto h-full flex items-center justify-between relative">
+        <div class="h-16 border-b border-gray-50 header-wrapper">
+            <div class="max-w-4xl mx-auto header-inner relative">
                 
                 <div class="logo-area w-[180px] flex-shrink-0 flex items-center pl-6 cursor-pointer group" onclick="resetAll()">
                     <img src="./logo.png" class="h-6 w-auto object-contain opacity-100 transition-opacity group-hover:opacity-80">
@@ -160,8 +168,8 @@
             </div>
         </div>
 
-        <div class="h-12 bg-white">
-            <div class="max-w-4xl mx-auto h-full flex items-center overflow-x-auto hide-scroll timeline-center-layout" id="timelineContainer">
+        <div class="h-12 bg-white timeline-container-mobile">
+            <div class="max-w-4xl mx-auto h-full flex items-center justify-center overflow-x-auto hide-scroll timeline-center-layout" id="timelineContainer">
                 </div>
         </div>
     </div>
@@ -186,9 +194,11 @@
                 download: true, header: true, skipEmptyLines: true,
                 complete: (res) => {
                     rawData = res.data.map(r => {
+                        // 修正品牌名
                         let brandName = r['竞品品牌']||r['Brand']||'';
                         if (brandName === '华三') brandName = '新华三'; 
                         
+                        // 修正日期
                         let dateStr = r['日期']||r['Date']||'';
                         if (/^\d{8,}$/.test(dateStr)) {
                             const dateObj = new Date(parseInt(dateStr));
@@ -223,8 +233,9 @@
         }
 
         function renderNavs() {
+            // 1. 品牌导航
             const dataBrands = new Set(rawData.map(i => i.brand));
-            dataBrands.add('新大陆'); // 强制添加 "新大陆"
+            dataBrands.add('新大陆'); 
             const brands = ['All', ...dataBrands];
 
             const navContainer = document.getElementById('topBrandNav');
@@ -240,11 +251,13 @@
                     renderNavs(); 
                     renderFeed();
                     window.scrollTo({ top: 0, behavior: 'smooth' });
+                    // 自动滚动到中间
                     e.target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
                 };
                 navContainer.appendChild(div);
             });
 
+            // 2. 时间轴
             const weeks = [...new Set(rawData.map(i => i.week))].sort().reverse();
             const tlContainer = document.getElementById('timelineContainer');
             tlContainer.innerHTML = ''; 
@@ -299,6 +312,7 @@
             const groups = filtered.reduce((acc, curr) => { (acc[curr.week] = acc[curr.week] || []).push(curr); return acc; }, {});
             
             Object.keys(groups).sort().reverse().forEach((week, idx) => {
+                // 如果选了“全部”周期，显示周标题作为分割
                 if (currentWeekFilter === 'all') {
                     const header = document.createElement('div');
                     header.className = `py-3 mb-4 border-b border-gray-100 text-[11px] font-bold text-gray-400 uppercase tracking-widest ${idx > 0 ? 'mt-12' : 'mt-6'}`;
