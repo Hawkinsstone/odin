@@ -41,7 +41,7 @@
         .nav-tab.active::after {
             content: '';
             position: absolute;
-            bottom: -20px; /* PC端下划线位置 */
+            bottom: -20px;
             left: 0;
             width: 100%;
             height: 2px;
@@ -87,43 +87,30 @@
         .timeline-center-layout { justify-content: center; }
         .header-inner { height: 100%; display: flex; align-items: center; justify-content: space-between; }
 
-        /* === 📱 手机端深度适配 (核心逻辑) === */
+        /* === 手机端深度适配 === */
         @media (max-width: 768px) {
-            /* 1. 头部容器变为自动高度，允许内容堆叠 */
             .header-wrapper { height: auto !important; border-bottom: none; }
-            .header-inner { 
-                flex-direction: column; /* 垂直排列 */
-                height: auto; 
-                padding: 0; 
-            }
+            .header-inner { flex-direction: column; height: auto; padding: 0; }
             
-            /* 2. Logo 区域：第一行，居中，带底部分割线 */
             .logo-area { 
-                width: 100% !important; /* 占满全宽 */
-                justify-content: center !important; /* 居中 */
-                padding: 12px 0 !important; /* 增加点击区域 */
+                width: 100% !important; 
+                justify-content: center !important; 
+                padding: 12px 0 !important; 
                 border-bottom: 1px solid #f9fafb;
                 margin-bottom: 4px;
             }
             
-            /* 3. 品牌导航：第二行，靠左滑动 */
             .nav-center-layout { 
                 width: 100%; 
                 justify-content: flex-start !important; 
                 padding: 0 16px !important;
                 overflow-x: auto;
             }
-            .nav-tab { 
-                margin: 0 24px 0 0; 
-                font-size: 0.95rem; 
-                padding: 8px 0; /* 增加手指点击面积 */
-            }
-            .nav-tab.active::after { bottom: 0px; } /* 修正手机端下划线位置 */
+            .nav-tab { margin: 0 24px 0 0; font-size: 0.95rem; padding: 8px 0; }
+            .nav-tab.active::after { bottom: 0px; }
             
-            /* 4. 隐藏右侧占位符 */
             .spacer-area { display: none; }
 
-            /* 5. 时间轴：第三行，靠左滑动 */
             .timeline-container-mobile { border-top: 1px solid #f9fafb; }
             .timeline-center-layout { 
                 justify-content: flex-start !important; 
@@ -131,7 +118,6 @@
                 padding-right: 16px; 
             }
 
-            /* 6. 内容流 */
             .feed-item { grid-template-columns: 1fr; gap: 12px; padding: 24px 0; }
         }
 
@@ -194,11 +180,9 @@
                 download: true, header: true, skipEmptyLines: true,
                 complete: (res) => {
                     rawData = res.data.map(r => {
-                        // 修正品牌名
                         let brandName = r['竞品品牌']||r['Brand']||'';
                         if (brandName === '华三') brandName = '新华三'; 
                         
-                        // 修正日期
                         let dateStr = r['日期']||r['Date']||'';
                         if (/^\d{8,}$/.test(dateStr)) {
                             const dateObj = new Date(parseInt(dateStr));
@@ -233,7 +217,6 @@
         }
 
         function renderNavs() {
-            // 1. 品牌导航
             const dataBrands = new Set(rawData.map(i => i.brand));
             dataBrands.add('新大陆'); 
             const brands = ['All', ...dataBrands];
@@ -251,13 +234,11 @@
                     renderNavs(); 
                     renderFeed();
                     window.scrollTo({ top: 0, behavior: 'smooth' });
-                    // 自动滚动到中间
                     e.target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
                 };
                 navContainer.appendChild(div);
             });
 
-            // 2. 时间轴
             const weeks = [...new Set(rawData.map(i => i.week))].sort().reverse();
             const tlContainer = document.getElementById('timelineContainer');
             tlContainer.innerHTML = ''; 
@@ -312,7 +293,6 @@
             const groups = filtered.reduce((acc, curr) => { (acc[curr.week] = acc[curr.week] || []).push(curr); return acc; }, {});
             
             Object.keys(groups).sort().reverse().forEach((week, idx) => {
-                // 如果选了“全部”周期，显示周标题作为分割
                 if (currentWeekFilter === 'all') {
                     const header = document.createElement('div');
                     header.className = `py-3 mb-4 border-b border-gray-100 text-[11px] font-bold text-gray-400 uppercase tracking-widest ${idx > 0 ? 'mt-12' : 'mt-6'}`;
@@ -331,9 +311,10 @@
                     else if (dim.includes('产品') || dim.includes('技术')) tagClass = 'tag-product';
                     else if (dim.includes('战略') || dim.includes('公司')) tagClass = 'tag-strategy';
 
+                    // ✅ 文案已修改为 Read More
                     const linkHtml = item.link ? 
                         `<a href="${item.link}" target="_blank" class="inline-flex items-center gap-1 text-xs font-semibold text-gray-900 hover:text-blue-600 transition-colors mt-4 border-b border-black hover:border-blue-600 pb-px">
-                            Read Source ↗
+                            Read More ↗
                          </a>` : '';
 
                     const div = document.createElement('div');
