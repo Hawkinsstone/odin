@@ -72,7 +72,7 @@
             color: #2563eb; 
         }
 
-        /* === 列表布局 === */
+        /* === 列表布局 (PC默认) === */
         .feed-item {
             display: grid;
             grid-template-columns: 140px 1fr; 
@@ -82,16 +82,31 @@
         }
         .feed-item:last-child { border-bottom: none; }
 
-        /* === 手机端适配 === */
+        /* === 📱 手机端核心适配 === */
         @media (max-width: 768px) {
-            .logo-area { display: none; } 
+            /* 1. 调整 Logo 区域：不隐藏，而是变小，确保可以点击重置 */
+            .logo-area { 
+                width: auto !important; 
+                padding-left: 16px !important; 
+                padding-right: 12px;
+                border-right: 1px solid #f3f4f6; /* 加个分割线更好看 */
+                margin-right: 4px;
+            }
+            
+            /* 2. 隐藏右侧占位符，给导航腾空间 */
             .spacer-area { display: none; }
-            .nav-center-layout { justify-content: flex-start; padding-left: 16px; }
-            .nav-tab { font-size: 1rem; margin-right: 24px; }
+            
+            /* 3. 导航栏左对齐，而不是居中 */
+            .nav-center-layout { justify-content: flex-start; }
+            
+            /* 4. 调整导航项间距 */
+            .nav-tab { font-size: 0.95rem; margin-right: 20px; margin-left: 8px; }
             .nav-tab.active::after { bottom: -12px; }
+            
+            /* 5. 列表内容垂直堆叠 */
             .feed-item { grid-template-columns: 1fr; gap: 12px; padding: 24px 0; }
             
-            /* 手机端时间轴也要靠左，方便滑动 */
+            /* 6. 时间轴靠左，方便滑动 */
             .timeline-center-layout { justify-content: flex-start !important; padding-left: 16px; padding-right: 16px; }
         }
 
@@ -125,6 +140,7 @@
         
         <div class="h-16 border-b border-gray-50">
             <div class="max-w-4xl mx-auto h-full flex items-center justify-between relative">
+                
                 <div class="logo-area w-[180px] flex-shrink-0 flex items-center pl-6 cursor-pointer group" onclick="resetAll()">
                     <img src="./logo.png" class="h-6 w-auto object-contain opacity-100 transition-opacity group-hover:opacity-80">
                 </div>
@@ -162,13 +178,12 @@
                 download: true, header: true, skipEmptyLines: true,
                 complete: (res) => {
                     rawData = res.data.map(r => {
-                        // 1. 数据清洗：品牌修正
+                        // 1. 品牌修正
                         let brandName = r['竞品品牌']||r['Brand']||'';
-                        if (brandName === '华三') brandName = '新华三'; // 强制修正
+                        if (brandName === '华三') brandName = '新华三'; 
                         
-                        // 2. 数据清洗：日期格式化 (处理时间戳)
+                        // 2. 日期清洗
                         let dateStr = r['日期']||r['Date']||'';
-                        // 如果全是数字且长度大于8 (假设是毫秒时间戳)
                         if (/^\d{8,}$/.test(dateStr)) {
                             const dateObj = new Date(parseInt(dateStr));
                             if (!isNaN(dateObj.getTime())) {
@@ -201,22 +216,20 @@
             renderFeed();
         }
 
-        // 渲染导航栏 (拆分出来方便重置)
         function renderNavs() {
             // 1. 品牌导航
             const brands = ['All', ...new Set(rawData.map(i => i.brand))];
             const navContainer = document.getElementById('topBrandNav');
-            navContainer.innerHTML = ''; // 清空
+            navContainer.innerHTML = ''; 
             
             brands.forEach((brand, index) => {
                 const div = document.createElement('div');
-                // 如果是 'All' 且当前是 'all'，或者具体品牌匹配
                 const isActive = (brand === 'All' && currentBrandFilter === 'all') || (brand === currentBrandFilter);
                 div.className = `nav-tab ${isActive ? 'active' : ''}`;
-                div.textContent = brand === 'All' ? '全部品牌' : brand; // 汉化
+                div.textContent = brand === 'All' ? '全部品牌' : brand; 
                 div.onclick = function(e) {
                     currentBrandFilter = brand === 'All' ? 'all' : brand;
-                    renderNavs(); // 重新渲染以更新 active 状态
+                    renderNavs(); 
                     renderFeed();
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                     e.target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
@@ -227,17 +240,14 @@
             // 2. 时间轴
             const weeks = [...new Set(rawData.map(i => i.week))].sort().reverse();
             const tlContainer = document.getElementById('timelineContainer');
-            tlContainer.innerHTML = ''; // 清空
+            tlContainer.innerHTML = ''; 
 
-            // 全部按钮
             addTimelineItem(tlContainer, '全部', 'all', currentWeekFilter === 'all');
             
-            // 分隔线
             const divider = document.createElement('div');
             divider.className = "h-4 w-px bg-gray-200 mx-2 flex-shrink-0";
             tlContainer.appendChild(divider);
 
-            // 周次按钮
             weeks.forEach(week => {
                 addTimelineItem(tlContainer, week, week, currentWeekFilter === week);
             });
@@ -249,7 +259,7 @@
             btn.textContent = text;
             btn.onclick = function(e) {
                 currentWeekFilter = value;
-                renderNavs(); // 更新选中态
+                renderNavs(); 
                 renderFeed();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 e.target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
@@ -257,7 +267,6 @@
             container.appendChild(btn);
         }
 
-        // 重置所有筛选 (Logo点击触发)
         function resetAll() {
             currentBrandFilter = 'all';
             currentWeekFilter = 'all';
