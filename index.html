@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="dark">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -13,278 +13,310 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     
     <style>
-        /* === 全局深色主题定义 === */
         body { 
             font-family: 'Noto Sans SC', system-ui, -apple-system, sans-serif; 
-            background-color: #0f172a; /* Slate-900 */
-            /* 酷炫的深空背景渐变 */
-            background-image: 
-                radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
-                radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
-                radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
-            background-attachment: fixed;
-            color: #e2e8f0; /* Slate-200 */
+            background-color: #f0f2f5; /* 浅灰背景，衬托毛玻璃 */
+            color: #334155; 
             -webkit-font-smoothing: antialiased;
-        }
-
-        /* === 科技感毛玻璃卡片 === */
-        .tech-card {
-            background: rgba(30, 41, 59, 0.4); /* 深色半透明 */
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08); /*极其微弱的白边*/
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
-            border-radius: 1rem;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            -webkit-tap-highlight-color: transparent;
         }
         
-        /* 悬停发光效果 */
-        .tech-card:hover {
-            background: rgba(30, 41, 59, 0.6);
-            border-color: rgba(56, 189, 248, 0.3); /* 悬停变青色边框 */
-            box-shadow: 0 0 20px rgba(56, 189, 248, 0.1); /* 青色光晕 */
-            transform: translateY(-2px);
-        }
-
-        /* === 顶部导航 === */
-        .tech-nav {
-            background: rgba(15, 23, 42, 0.8);
+        /* 顶部导航毛玻璃 */
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
         }
 
-        /* === 下拉筛选框 (深色版) === */
+        /* 卡片通用样式 (无毛玻璃，白色背景更清晰) */
+        .card-base {
+            background: #ffffff;
+            border-radius: 1rem; /* 16px */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 15px 30px rgba(0,0,0,0.08); }
+
+        /* 区域容器毛玻璃 (用于包裹图表区和筛选区) */
+        .glass-wrapper {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 1.5rem;
+            padding: 1rem;
+        }
+
+        /* 下拉框样式 */
         .custom-select-wrapper { position: relative; flex-shrink: 0; }
         .custom-select {
             appearance: none;
-            background-color: rgba(30, 41, 59, 0.6);
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            padding: 6px 32px 6px 14px;
-            border-radius: 99px;
-            font-size: 0.85rem;
-            color: #cbd5e1;
+            -webkit-appearance: none;
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            padding: 8px 32px 8px 14px;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #475569;
             cursor: pointer;
             transition: all 0.2s;
+            line-height: 1.5;
+            white-space: nowrap;
         }
-        .custom-select:hover { background-color: rgba(51, 65, 85, 0.8); border-color: rgba(56, 189, 248, 0.5); color: #fff; }
-        .custom-select:focus { outline: none; border-color: #38bdf8; box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2); }
-        .select-arrow { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #94a3b8; }
-
-        /* === 霓虹标签系统 === */
-        .tag-base { font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; font-weight: 600; letter-spacing: 0.05em; }
-        /* 战略：青色霓虹 */
-        .tag-strategy { background: rgba(6, 182, 212, 0.15); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.3); }
-        /* 产品：紫色霓虹 */
-        .tag-product { background: rgba(168, 85, 247, 0.15); color: #e879f9; border: 1px solid rgba(168, 85, 247, 0.3); }
-        /* 市场：橙色霓虹 */
-        .tag-market { background: rgba(249, 115, 22, 0.15); color: #fdba74; border: 1px solid rgba(249, 115, 22, 0.3); }
+        .custom-select:hover { border-color: #cbd5e1; background-color: #f8fafc; }
+        .custom-select:focus { outline: none; border-color: #5470C6; box-shadow: 0 0 0 3px rgba(84, 112, 198, 0.1); }
         
-        /* 品牌胶囊：深色背景+白字 */
-        .brand-badge { font-weight: 600; border-radius: 4px; padding: 2px 8px; font-size: 0.7rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); color: #f1f5f9; }
+        .select-arrow { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #94a3b8; }
 
-        /* 滚动条隐藏 */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* Logo 自动变白滤镜 (防止用户logo是黑色的看不清) */
-        .logo-white-filter { filter: brightness(0) invert(1) opacity(0.9); }
+        .tag-base { font-size: 0.75rem; padding: 2px 8px; border-radius: 6px; font-weight: 600; letter-spacing: 0.02em; white-space: nowrap; }
+        /* 标签也配合新色系 */
+        .tag-strategy { background-color: #eefbfd; color: #5470C6; border: 1px solid #bfdbfe; } 
+        .tag-product { background-color: #f0fdf4; color: #91CC75; border: 1px solid #bbf7d0; } 
+        .tag-market { background-color: #fffcf0; color: #FAC858; border: 1px solid #fde68a; } 
+        .brand-badge { font-weight: 600; border-radius: 6px; padding: 3px 10px; font-size: 0.75rem; display: inline-flex; align-items: center; white-space: nowrap; }
 
-        /* 加载动画 */
-        #loading { position: fixed; inset: 0; background:#0f172a; display:flex; justify-content:center; align-items:center; z-index:100; }
-        .loader { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1); border-top-color: #38bdf8; border-radius: 50%; animation: spin 1s linear infinite; }
+        #loading { position: fixed; inset: 0; background:#f8fafc; display:flex; justify-content:center; align-items:center; z-index:100; }
+        .loader { width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #5470C6; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="pb-12">
+<body class="antialiased pb-10">
 
     <div id="loading">
         <div class="flex flex-col items-center gap-3">
             <div class="loader"></div>
-            <div class="text-slate-500 text-xs font-mono animate-pulse">SYSTEM INITIALIZING...</div>
+            <div class="text-slate-400 text-sm font-medium animate-pulse">Loading Data...</div>
         </div>
     </div>
 
-    <header class="tech-nav sticky top-0 z-50 w-full">
+    <header class="glass-nav sticky top-0 z-50 w-full">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-4">
-                <img src="./logo.png" alt="欧帝科技" class="h-6 w-auto object-contain logo-white-filter">
-                <div class="h-4 w-[1px] bg-slate-700 rotate-12 hidden sm:block"></div>
-                <div class="flex items-baseline gap-3">
-                    <h1 class="text-lg font-bold text-white tracking-wider uppercase">Competitive Intel</h1>
-                    <span id="dateRange" class="hidden sm:inline-flex text-[10px] font-mono text-cyan-400 border border-cyan-900/50 bg-cyan-950/30 px-2 py-0.5 rounded">--/--</span>
+            <div class="flex items-center gap-3 sm:gap-4">
+                <img src="./logo.png" alt="欧帝科技" class="h-6 sm:h-7 w-auto object-contain opacity-95">
+                <div class="h-4 w-[1.5px] bg-slate-300 rotate-12 hidden sm:block"></div>
+                <div class="flex items-baseline gap-2 sm:gap-3">
+                    <h1 class="text-base sm:text-lg font-bold text-slate-800 tracking-tight">竞品追踪周报</h1>
+                    <span id="dateRange" class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white text-slate-500 border border-slate-200 shadow-sm">--/--</span>
                 </div>
             </div>
             <div class="flex items-center">
-                <div class="flex items-center gap-2 px-3 py-1 rounded-full border border-green-500/20 bg-green-500/10">
-                    <span class="relative flex h-1.5 w-1.5">
+                <div class="flex items-center gap-2 bg-white/80 border border-slate-200 px-2 sm:px-3 py-1 rounded-full shadow-sm backdrop-blur-sm">
+                    <span class="relative flex h-2 w-2">
                       <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                      <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                     </span>
-                    <span class="text-[10px] font-mono text-green-400 hidden sm:inline" id="updateTime">ONLINE</span>
+                    <span class="text-xs font-medium text-slate-500 hidden sm:inline" id="updateTime">同步中</span>
                 </div>
             </div>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div class="tech-card p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-sm font-bold text-slate-300 uppercase tracking-widest flex items-center gap-2">
-                        <span class="w-1 h-4 bg-cyan-500 shadow-[0_0_10px_#06b6d4]"></span>
-                        Brand Volume
-                    </h3>
+        <div class="glass-wrapper mb-6 sm:mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                <div class="card-base p-4 sm:p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                            <div class="w-1.5 h-4 rounded-full bg-[#5470C6]"></div>
+                            声量分布
+                        </h3>
+                    </div>
+                    <div class="h-48 sm:h-56"><canvas id="brandChart"></canvas></div>
                 </div>
-                <div class="h-52"><canvas id="brandChart"></canvas></div>
-            </div>
-            <div class="tech-card p-6 relative">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-sm font-bold text-slate-300 uppercase tracking-widest flex items-center gap-2">
-                        <span class="w-1 h-4 bg-purple-500 shadow-[0_0_10px_#a855f7]"></span>
-                        Dimensions
-                    </h3>
-                </div>
-                <div class="h-52 flex items-center justify-center relative">
-                    <canvas id="dimensionChart"></canvas>
-                    <div id="dimensionCenterText" class="absolute text-center pointer-events-none"></div>
+                <div class="card-base p-4 sm:p-6 relative">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                            <div class="w-1.5 h-4 rounded-full bg-[#91CC75]"></div>
+                            维度占比
+                        </h3>
+                    </div>
+                    <div class="h-48 sm:h-56 relative flex items-center justify-center">
+                        <canvas id="dimensionChart"></canvas>
+                        <div id="dimensionCenterText" class="absolute text-center text-slate-600 pointer-events-none"></div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="tech-card mb-8 sticky top-20 z-40 p-3 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10">
-            <div class="flex items-center gap-3 w-full sm:w-auto overflow-x-auto no-scrollbar px-1">
-                <div class="flex items-center text-cyan-500 mr-1 flex-shrink-0">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+        <div class="glass-wrapper mb-6 sm:mb-8 sticky top-16 sm:top-20 z-40 p-2 sm:p-3 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
+            
+            <div class="flex items-center gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar px-1 pb-1 sm:pb-0">
+                <div class="flex items-center text-slate-400 mr-1 flex-shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
                 </div>
                 <div class="custom-select-wrapper">
-                    <select id="weekFilter" onchange="renderCards()" class="custom-select pr-8"><option value="all">周期 (All)</option></select>
-                    <svg class="select-arrow w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    <select id="weekFilter" onchange="renderCards()" class="custom-select pr-8 sm:pr-10"><option value="all">📅 周期</option></select>
+                    <svg class="select-arrow w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </div>
                 <div class="custom-select-wrapper">
-                    <select id="brandFilter" onchange="renderCards()" class="custom-select pr-8"><option value="all">品牌 (All)</option></select>
-                    <svg class="select-arrow w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    <select id="brandFilter" onchange="renderCards()" class="custom-select pr-8 sm:pr-10"><option value="all">🏢 品牌</option></select>
+                    <svg class="select-arrow w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </div>
                 <div class="custom-select-wrapper">
-                    <select id="typeFilter" onchange="renderCards()" class="custom-select pr-8"><option value="all">维度 (All)</option></select>
-                    <svg class="select-arrow w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    <select id="typeFilter" onchange="renderCards()" class="custom-select pr-8 sm:pr-10">
+                        <option value="all">🎯 维度</option>
+                        <option value="产品与技术">产品与技术</option>
+                        <option value="市场与营销">市场与营销</option>
+                        <option value="公司与战略">公司与战略</option>
+                    </select>
+                    <svg class="select-arrow w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </div>
             </div>
             
-            <div class="flex items-center gap-3 px-4 border-l border-white/10 h-8">
-                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Records</span>
-                <span id="countDisplay" class="text-xl font-mono font-bold text-cyan-400 text-shadow-neon">0</span>
+            <div class="flex items-center gap-2 px-4 w-full sm:w-auto justify-end border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 h-auto sm:h-6">
+                <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Total</span>
+                <span id="countDisplay" class="text-base sm:text-lg font-bold text-slate-800 font-mono">0</span>
             </div>
         </div>
 
-        <div id="contentFeed" class="space-y-6"></div>
+        <div id="contentFeed" class="space-y-6 sm:space-y-8"></div>
 
-        <footer class="mt-16 pb-8 text-center border-t border-white/5 pt-8">
-            <p class="text-[10px] text-slate-600 font-mono uppercase">Odin Tech Intelligence System · Internal Access Only</p>
+        <footer class="mt-12 sm:mt-20 pb-4 sm:pb-8 text-center">
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white border border-slate-200 shadow-sm">
+                <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                <p class="text-[10px] sm:text-xs text-slate-400 font-medium">Internal Use Only · 欧帝科技市场部</p>
+            </div>
         </footer>
     </main>
 
     <script>
         Chart.register(ChartDataLabels);
-        
-        // 🔴 全局 Chart.js 暗黑模式配置 🔴
-        Chart.defaults.color = '#94a3b8'; // 文字颜色变灰
-        Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)'; // 网格线极淡
-        
         const GOOGLE_SHEET_CSV_URL = "./data.csv"; 
+        
+        // 🎨 核心配色：AntV / ECharts 经典色盘 (参照上传的图片风格)
+        const CUSTOM_COLORS = [
+            '#5470C6', // 深蓝
+            '#91CC75', // 草绿
+            '#FAC858', // 明黄
+            '#EE6666', // 珊瑚红
+            '#73C0DE', // 天蓝
+            '#3BA272', // 深绿
+            '#FC8452', // 橙色
+            '#9A60B4', // 紫色
+            '#EA7CCC'  // 粉色
+        ];
+
+        function getColor(index) { return CUSTOM_COLORS[index % CUSTOM_COLORS.length]; }
+
         let rawData = [];
 
         function loadData() {
             Papa.parse(GOOGLE_SHEET_CSV_URL, {
-                download: true, header: true, skipEmptyLines: true,
+                download: true,
+                header: true,
+                skipEmptyLines: true,
                 complete: function(results) {
                     rawData = results.data.map(row => ({
-                        week: row['周期']||row['Week']||'Unknown', date: row['日期']||'', brand: row['竞品品牌']||'', 
-                        dim: row['追踪维度（单选）']||'', fact: row['事实描述']||'', analysis: row['分析']||'', link: row['信息源']||''
+                        week: row['周期'] || row['Week'] || '未知',
+                        date: row['日期'] || row['Date'] || '',
+                        brand: row['竞品品牌'] || row['Brand'] || '其他',
+                        dim: row['追踪维度（单选）'] || row['Dimension'] || '其他',
+                        fact: row['事实描述'] || row['Fact'] || '无描述',
+                        analysis: row['分析'] || row['Analysis'] || '',
+                        link: row['信息源'] || row['Link'] || ''
                     })).filter(item => item.brand && item.fact);
                     initApp();
-                }
+                },
+                error: function(err) { console.error(err); }
             });
         }
 
         function initApp() {
             document.getElementById('loading').style.display = 'none';
-            document.getElementById('updateTime').textContent = "UPDATED: " + new Date().toLocaleDateString();
+            document.getElementById('updateTime').textContent = "Updated: " + new Date().toLocaleDateString(undefined, {month:'short', day:'numeric'});
             const weeks = [...new Set(rawData.map(i => i.week))].sort().reverse();
             const brands = [...new Set(rawData.map(i => i.brand))];
-            weeks.forEach(w => document.getElementById('weekFilter').add(new Option(w, w)));
-            brands.forEach(b => document.getElementById('brandFilter').add(new Option(b, b)));
-            if(weeks.length) document.getElementById('dateRange').textContent = `${weeks[weeks.length-1]} -> ${weeks[0]}`;
+            const wSelect = document.getElementById('weekFilter');
+            weeks.forEach(w => wSelect.add(new Option(w, w)));
+            const bSelect = document.getElementById('brandFilter');
+            brands.forEach(b => bSelect.add(new Option(b, b)));
+            if(weeks.length > 0) document.getElementById('dateRange').textContent = `${weeks[weeks.length-1]} ~ ${weeks[0]}`;
             renderCharts();
             renderCards();
         }
 
         function renderCharts() {
-            const brandCounts = {}; rawData.forEach(i => brandCounts[i.brand] = (brandCounts[i.brand] || 0) + 1);
-            const dimCounts = {}; rawData.forEach(i => dimCounts[i.dim] = (dimCounts[i.dim] || 0) + 1);
+            const brandCounts = {};
+            rawData.forEach(i => brandCounts[i.brand] = (brandCounts[i.brand] || 0) + 1);
+            const dimCounts = {};
+            rawData.forEach(i => dimCounts[i.dim] = (dimCounts[i.dim] || 0) + 1);
 
-            // 1. 柱状图：赛博朋克霓虹渐变
-            const ctxBrand = document.getElementById('brandChart').getContext('2d');
-            const gradientBrand = ctxBrand.createLinearGradient(0, 0, 0, 400);
-            gradientBrand.addColorStop(0, '#22d3ee'); // 青色
-            gradientBrand.addColorStop(1, '#3b82f6'); // 蓝色
-
-            new Chart(ctxBrand, {
+            // 1. 声量分布：多色柱状图
+            const brandColors = Object.keys(brandCounts).map((_, i) => getColor(i));
+            new Chart(document.getElementById('brandChart'), {
                 type: 'bar',
                 data: {
                     labels: Object.keys(brandCounts),
                     datasets: [{
                         data: Object.values(brandCounts),
-                        backgroundColor: gradientBrand,
-                        hoverBackgroundColor: '#67e8f9',
-                        borderRadius: 2,
-                        barThickness: window.innerWidth < 640 ? 12 : 20
+                        backgroundColor: brandColors,
+                        borderRadius: 4,
+                        barThickness: window.innerWidth < 640 ? 16 : 28
                     }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: {display:false}, datalabels: {display:false} },
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, datalabels: { display: false } },
                     scales: {
-                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { font: {family: 'Noto Sans SC'} } },
-                        x: { grid: { display: false } }
+                        y: { beginAtZero: true, grid: { color: '#f1f5f9' }, border: { display: false }, ticks: { font: { size: 10 } } },
+                        x: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 10 } } }
                     }
                 }
             });
 
-            // 2. 甜甜圈图：霓虹色系
-            const total = Object.values(dimCounts).reduce((a,b)=>a+b,0);
-            // 颜色：青色, 紫色, 粉红
-            const neonColors = ['#06b6d4', '#8b5cf6', '#ec4899', '#f59e0b'];
+            // 2. 维度占比：多色甜甜圈 + 百分比标签
+            const dimColors = Object.keys(dimCounts).map((_, i) => getColor(i + 3)); // 颜色偏移
+            const total = Object.values(dimCounts).reduce((a, b) => a + b, 0);
             
-            window.dimChart = new Chart(document.getElementById('dimensionChart'), {
+            const dimCtx = document.getElementById('dimensionChart');
+            if (window.dimChart) window.dimChart.destroy();
+            
+            window.dimChart = new Chart(dimCtx, {
                 type: 'doughnut',
                 data: {
                     labels: Object.keys(dimCounts),
                     datasets: [{
                         data: Object.values(dimCounts),
-                        backgroundColor: neonColors,
+                        backgroundColor: dimColors,
                         borderWidth: 0,
-                        hoverOffset: 10
+                        hoverOffset: 6
                     }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false, cutout: '75%',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
                     plugins: { 
-                        legend: { position: 'right', labels: { color:'#94a3b8', usePointStyle: true, pointStyle: 'circle', boxWidth: 6, font: {size: 10} } },
-                        datalabels: { color: '#fff', font: {weight:'bold'}, formatter: (v)=>Math.round(v/total*100)+'%' }
+                        legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 8, font: { size: 11 } } },
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold', size: 10 },
+                            formatter: (value) => Math.round(value / total * 100) + '%'
+                        }
                     },
                     onHover: (e, els) => {
                         const center = document.getElementById('dimensionCenterText');
                         if(els.length) {
                             const i = els[0].index;
-                            center.innerHTML = `<div class="text-xs text-slate-400">${window.dimChart.data.labels[i]}</div><div class="text-xl font-bold text-white text-shadow-neon">${Math.round(window.dimChart.data.datasets[0].data[i]/total*100)}%</div>`;
+                            const label = window.dimChart.data.labels[i];
+                            const val = window.dimChart.data.datasets[0].data[i];
+                            center.innerHTML = `<div class="text-xs text-slate-500">${label}</div><div class="text-xl font-bold text-slate-800">${Math.round(val/total*100)}%</div>`;
                         } else {
-                            center.innerHTML = `<div class="text-xs text-slate-500">TOTAL</div><div class="text-xl font-bold text-white">${total}</div>`;
+                            center.innerHTML = `<div class="text-xs text-slate-500">总计</div><div class="text-xl font-bold text-slate-800">${total}</div>`;
                         }
                     }
                 }
             });
-            document.getElementById('dimensionCenterText').innerHTML = `<div class="text-xs text-slate-500">TOTAL</div><div class="text-xl font-bold text-white">${total}</div>`;
+            document.getElementById('dimensionCenterText').innerHTML = `<div class="text-xs text-slate-500">总计</div><div class="text-xl font-bold text-slate-800">${total}</div>`;
         }
 
         function renderCards() {
@@ -295,43 +327,48 @@
             container.innerHTML = '';
 
             const filtered = rawData.filter(item => 
-                (weekVal === 'all' || item.week === weekVal) && (brandVal === 'all' || item.brand === brandVal) && (typeVal === 'all' || item.dim === typeVal)
+                (weekVal === 'all' || item.week === weekVal) &&
+                (brandVal === 'all' || item.brand === brandVal) &&
+                (typeVal === 'all' || item.dim === typeVal)
             );
-            document.getElementById('countDisplay').textContent = filtered.length;
 
+            document.getElementById('countDisplay').textContent = filtered.length;
             const groups = filtered.reduce((acc, curr) => { (acc[curr.week] = acc[curr.week] || []).push(curr); return acc; }, {});
             
             Object.keys(groups).sort().reverse().forEach(week => {
                 const header = document.createElement('div');
-                header.className = "flex items-center space-x-3 mt-8 mb-4";
-                header.innerHTML = `<span class="bg-slate-800 border border-slate-700 text-cyan-500 text-[10px] font-bold px-3 py-1 rounded shadow-sm font-mono">WEEK ${week}</span><div class="h-[1px] bg-slate-800 flex-grow"></div>`;
+                header.className = "flex items-center space-x-3 mt-6 mb-4";
+                header.innerHTML = `<span class="bg-slate-800 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm">${week}</span><div class="h-px bg-slate-300 flex-grow"></div>`;
                 container.appendChild(header);
 
                 const grid = document.createElement('div');
                 grid.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
                 groups[week].forEach(item => {
+                    let brandStyle = 'bg-slate-50 text-slate-600 border-slate-200';
+                    // 品牌标签根据名称匹配色系
+                    if(['华为','新华三'].some(k=>item.brand.includes(k))) brandStyle = 'bg-red-50 text-red-600 border-red-100';
+                    if(['腾讯','浪潮'].some(k=>item.brand.includes(k))) brandStyle = 'bg-blue-50 text-blue-600 border-blue-100';
+                    if(['阿里','金智'].some(k=>item.brand.includes(k))) brandStyle = 'bg-orange-50 text-orange-600 border-orange-100';
+
                     let dimClass = 'tag-market';
                     if(item.dim.includes('战略')) dimClass = 'tag-strategy';
                     if(item.dim.includes('产品')) dimClass = 'tag-product';
 
-                    const linkHtml = item.link ? 
-                        `<a href="${item.link}" target="_blank" class="inline-flex items-center text-xs font-bold text-cyan-500 hover:text-cyan-300 mt-4 pt-4 border-t border-white/5 w-full transition-colors">
-                            ACCESS SOURCE <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                         </a>` : '';
+                    const linkHtml = item.link ? `<a href="${item.link}" target="_blank" class="inline-flex items-center text-xs font-semibold text-blue-600 hover:text-blue-800 mt-4 pt-4 border-t border-slate-100 w-full">阅读详情 &rarr;</a>` : '';
 
                     const card = document.createElement('div');
-                    card.className = "tech-card p-5 flex flex-col h-full group";
+                    card.className = "card-base p-5 card-hover flex flex-col h-full";
                     card.innerHTML = `
-                        <div class="flex justify-between items-start mb-4">
-                            <span class="brand-badge">${item.brand}</span>
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="brand-badge border ${brandStyle}">${item.brand}</span>
                             <span class="tag-base ${dimClass}">${item.dim}</span>
                         </div>
-                        <h4 class="text-[14px] font-bold text-slate-200 leading-relaxed mb-3 line-clamp-2 group-hover:text-cyan-100 transition-colors" title="${item.fact}">${item.fact}</h4>
-                        <div class="bg-slate-900/50 p-3 rounded border border-white/5 mb-auto">
-                            <p class="text-xs text-slate-400 text-justify leading-relaxed font-light">${item.analysis}</p>
+                        <h4 class="text-[15px] font-bold text-slate-800 leading-snug mb-3 line-clamp-2" title="${item.fact}">${item.fact}</h4>
+                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 mb-auto">
+                            <p class="text-xs text-slate-500 text-justify leading-relaxed">${item.analysis}</p>
                         </div>
                         ${linkHtml}
-                        <div class="mt-3 text-[9px] text-slate-600 font-mono text-right tracking-wider">${item.date}</div>
+                        <div class="mt-3 text-[10px] text-slate-400 text-right">${item.date}</div>
                     `;
                     grid.appendChild(card);
                 });
