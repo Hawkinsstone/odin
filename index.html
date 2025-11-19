@@ -6,7 +6,7 @@
     <title>Competitor Intelligence | Odin</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -20,9 +20,9 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* === 导航栏样式 === */
+        /* === 第一排：品牌导航 (Tab) === */
         .nav-tab {
-            font-size: 0.9rem; 
+            font-size: 0.95rem; 
             color: #888;
             cursor: pointer;
             transition: all 0.2s;
@@ -38,97 +38,62 @@
         .nav-tab.active::after {
             content: '';
             position: absolute;
-            bottom: -6px;
+            bottom: -18px; /* 调整下划线位置 */
             left: 0;
             width: 100%;
             height: 2px;
             background-color: #000;
         }
 
-        /* === 隐形下拉框 === */
-        .ghost-select-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-            font-size: 12px;
-            font-weight: 600;
-            color: #999;
+        /* === 第二排：周期导航 (Pill/Chip) === */
+        .week-tab {
+            font-size: 0.85rem;
+            padding: 6px 16px;
+            border-radius: 999px; /* 胶囊形状 */
+            background-color: #f5f5f5;
+            color: #666;
+            font-weight: 500;
             cursor: pointer;
-            transition: color 0.2s;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            transition: all 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
+            border: 1px solid transparent;
         }
-        .ghost-select-wrapper:hover { color: #000; }
-        
-        .ghost-select {
-            appearance: none;
-            background: transparent;
-            border: none;
-            padding-right: 18px; 
-            color: inherit;
-            font-family: inherit;
-            font-size: inherit;
-            font-weight: inherit;
-            cursor: pointer;
-            outline: none;
-            text-align: right;
+        .week-tab:hover { background-color: #e5e5e5; }
+        .week-tab.active {
+            background-color: #1a1a1a; /* 选中变黑 */
+            color: #fff;
+            font-weight: 600;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
         }
 
-        /* === 列表布局 (PC默认) === */
+        /* === 列表布局 === */
         .feed-item {
             display: grid;
-            grid-template-columns: 140px 1fr; /* PC: 左侧元数据，右侧内容 */
+            grid-template-columns: 140px 1fr; 
             gap: 40px;
-            padding: 48px 0;
+            padding: 40px 0;
             border-bottom: 1px solid #f5f5f5;
         }
         .feed-item:last-child { border-bottom: none; }
 
-        /* === 手机端适配的核心 CSS === */
+        /* === 手机端适配 === */
         @media (max-width: 768px) {
-            /* 导航栏变为两行 */
-            .header-container {
-                flex-direction: column;
-                height: auto !important;
-                padding-top: 12px;
-                padding-bottom: 0;
-            }
+            /* 头部布局调整 */
+            .header-wrapper { padding: 0 16px; }
             
-            /* 第一行：Logo 和 Filter */
-            .mobile-top-row {
-                width: 100%;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 8px;
-            }
+            .logo-area { display: none; } /* 手机端隐藏 Logo 以节省空间，或保留看您需求 */
+            .nav-center-layout { justify-content: flex-start; }
+            
+            /* 品牌导航左对齐 */
+            .nav-tab { margin: 0 20px 0 0; font-size: 1rem; }
+            .nav-tab.active::after { bottom: -10px; }
 
-            /* 第二行：导航滑动 */
-            .nav-scroll-area {
-                width: 100%;
-                overflow-x: auto;
-                display: flex;
-                justify-content: flex-start !important; /* 强制左对齐 */
-                padding-bottom: 12px; /* 给滚动条或下划线留空间 */
-                margin: 0 -24px; /* 抵消父容器 padding */
-                padding-left: 24px; /* 内容补回 padding */
-                padding-right: 24px;
-            }
-
-            /* PC端的占位元素在手机端隐藏或调整 */
-            .logo-area, .filter-area { width: auto !important; }
-            .nav-tab { margin: 0 12px 0 0; font-size: 14px; }
-            .nav-tab.active::after { bottom: 0px; }
-
-            /* 内容流变为垂直堆叠 */
-            .feed-item { 
-                grid-template-columns: 1fr; /* 单列 */
-                gap: 16px; 
-                padding: 24px 0; 
-            }
+            /* 列表变为垂直 */
+            .feed-item { grid-template-columns: 1fr; gap: 12px; padding: 24px 0; }
         }
 
-        /* 标签 */
+        /* 标签颜色 */
         .tag {
             display: inline-block;
             padding: 3px 8px;
@@ -143,55 +108,52 @@
         .tag-product { background: #eff6ff; color: #1d4ed8; }
         .tag-strategy { background: #f5f3ff; color: #6d28d9; }
 
-        #loading { position: fixed; inset: 0; background:white; z-index: 50; display: flex; justify-content: center; align-items: center; }
+        #loading { position: fixed; inset: 0; background:white; z-index: 100; display: flex; justify-content: center; align-items: center; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        /* 隐藏滚动条但支持滑动 */
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        .hide-scroll::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="flex flex-col min-h-screen">
+<body class="flex flex-col min-h-screen bg-white">
 
     <div id="loading"><div class="w-5 h-5 border-2 border-gray-100 border-t-black rounded-full animate-spin"></div></div>
 
-    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-gray-100">
-        <div class="header-container max-w-6xl mx-auto px-6 h-16 flex items-center justify-between relative">
-            
-            <div class="mobile-top-row md:contents">
-                
-                <div class="logo-area md:w-32 flex-shrink-0 flex items-center">
+    <div class="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+        
+        <div class="h-14 border-b border-gray-50">
+            <div class="max-w-4xl mx-auto h-full px-6 flex items-center justify-between nav-center-layout relative">
+                <div class="logo-area w-32 flex-shrink-0 flex items-center">
                     <img src="./logo.png" class="h-6 w-auto object-contain">
                 </div>
 
-                <div class="filter-area md:w-32 flex justify-end flex-shrink-0">
-                    <div class="ghost-select-wrapper">
-                        <select id="weekFilter" onchange="renderFeed()" class="ghost-select">
-                            <option value="all">All Time</option>
-                        </select>
-                        <svg class="w-3 h-3 absolute right-0 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                <div class="flex-1 flex justify-center overflow-x-auto hide-scroll h-full items-center" id="topBrandNav">
                     </div>
-                </div>
 
+                <div class="logo-area w-32 flex-shrink-0"></div>
             </div>
-
-            <div class="nav-scroll-area flex-1 flex justify-center md:overflow-visible no-scrollbar" id="topBrandNav">
-                </div>
-
         </div>
-    </header>
 
-    <main class="flex-1 w-full max-w-4xl mx-auto px-6">
+        <div class="h-14 bg-white">
+            <div class="max-w-4xl mx-auto h-full px-6 flex items-center overflow-x-auto hide-scroll gap-3" id="weekNavContainer">
+                </div>
+        </div>
+    </div>
+
+    <main class="flex-1 w-full max-w-4xl mx-auto px-6 pb-20">
+        <div id="contentFeed"></div>
         
-        <div id="contentFeed">
-            </div>
-
-        <footer class="mt-24 pt-12 border-t border-gray-50 text-center pb-12">
-            <p class="text-[10px] text-gray-300 font-mono tracking-widest uppercase">Internal Intelligence System</p>
+        <footer class="mt-16 pt-12 border-t border-gray-50 text-center text-[10px] text-gray-300 font-mono tracking-widest uppercase">
+            Internal Intelligence System
         </footer>
-
     </main>
 
     <script>
         const GOOGLE_SHEET_CSV_URL = "./data.csv"; 
         let rawData = [];
         let currentBrandFilter = 'all';
+        let currentWeekFilter = 'all';
 
         function loadData() {
             Papa.parse(GOOGLE_SHEET_CSV_URL, {
@@ -209,6 +171,7 @@
         function initApp() {
             document.getElementById('loading').style.display = 'none';
             
+            // 1. 初始化品牌导航 (第一排)
             const brands = ['All', ...new Set(rawData.map(i => i.brand))];
             const navContainer = document.getElementById('topBrandNav');
             
@@ -217,51 +180,89 @@
                 div.className = `nav-tab ${index === 0 ? 'active' : ''}`;
                 div.textContent = brand;
                 div.onclick = function(e) {
+                    // 样式切换
                     document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
                     this.classList.add('active');
+                    // 滚动居中
+                    e.target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                    
+                    // 逻辑处理
                     currentBrandFilter = brand === 'All' ? 'all' : brand;
                     renderFeed();
                     window.scrollTo({ top: 0, behavior: 'smooth' });
-                    
-                    // 手机端点击后，让选中的项滚到中间 (简单优化)
-                    e.target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
                 };
                 navContainer.appendChild(div);
             });
 
+            // 2. 初始化周期导航 (第二排) - 新增逻辑
             const weeks = [...new Set(rawData.map(i => i.week))].sort().reverse();
-            weeks.forEach(w => document.getElementById('weekFilter').add(new Option(w, w)));
+            const weekContainer = document.getElementById('weekNavContainer');
+
+            // 添加“全部”按钮
+            addWeekButton(weekContainer, '全部周期', 'all', true);
+            // 添加各个周按钮
+            weeks.forEach(week => {
+                addWeekButton(weekContainer, week, week, false);
+            });
 
             renderFeed();
         }
 
+        // 辅助函数：生成周按钮
+        function addWeekButton(container, text, value, isActive) {
+            const btn = document.createElement('div');
+            btn.className = `week-tab ${isActive ? 'active' : ''}`;
+            btn.textContent = text;
+            btn.onclick = function(e) {
+                // 样式切换
+                document.querySelectorAll('.week-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                // 滚动居中
+                e.target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+
+                // 逻辑处理
+                currentWeekFilter = value;
+                renderFeed();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+            container.appendChild(btn);
+        }
+
         function renderFeed() {
-            const wVal = document.getElementById('weekFilter').value;
             const filtered = rawData.filter(item => 
                 (currentBrandFilter === 'all' || item.brand === currentBrandFilter) &&
-                (wVal === 'all' || item.week === wVal)
+                (currentWeekFilter === 'all' || item.week === currentWeekFilter)
             );
             
             const container = document.getElementById('contentFeed');
             container.innerHTML = '';
 
             if (filtered.length === 0) {
-                container.innerHTML = `<div class="py-32 text-center text-gray-300 text-sm font-mono">No intelligence found.</div>`;
+                container.innerHTML = `<div class="py-32 text-center text-gray-300 text-sm font-mono">No intelligence found for this selection.</div>`;
                 return;
             }
 
+            // 按周分组
             const groups = filtered.reduce((acc, curr) => { (acc[curr.week] = acc[curr.week] || []).push(curr); return acc; }, {});
             
+            // 如果用户选了特定周，groups 里其实只有那一周的数据
             Object.keys(groups).sort().reverse().forEach((week, idx) => {
-                // 动态计算 Sticky 头部的高度位置
-                // 手机端 Header 变高了，所以 sticky 位置要调整，简单起见这里用稍大的值兼容
-                const header = document.createElement('div');
-                header.className = `sticky top-24 md:top-[63px] z-30 bg-white/95 py-3 mb-4 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-widest backdrop-blur ${idx > 0 ? 'mt-8' : 'mt-4'}`;
-                header.textContent = week;
-                container.appendChild(header);
+                
+                // 只有在显示“全部周期”时，才需要显示周标题分隔符
+                // 如果用户只选了“47周”，那满屏都是47周，不需要分隔符，直接显示卡片更干净
+                if (currentWeekFilter === 'all') {
+                    const header = document.createElement('div');
+                    header.className = `py-3 mb-4 border-b border-gray-100 text-[11px] font-bold text-gray-400 uppercase tracking-widest ${idx > 0 ? 'mt-12' : 'mt-6'}`;
+                    header.textContent = week;
+                    container.appendChild(header);
+                } else if (idx === 0) {
+                     // 如果选了特定周，加一点顶部间距
+                     const spacer = document.createElement('div');
+                     spacer.className = "mt-6";
+                     container.appendChild(spacer);
+                }
 
                 groups[week].forEach(item => {
-                    // 标签颜色
                     let tagClass = 'tag-gray';
                     const dim = item.dim;
                     if (dim.includes('市场') || dim.includes('营销')) tagClass = 'tag-market';
@@ -276,23 +277,17 @@
                     const div = document.createElement('div');
                     div.className = "feed-item group";
                     div.innerHTML = `
-                        <div class="pt-1 flex flex-row md:flex-col items-center md:items-start gap-2 md:gap-0">
-                            <div class="text-sm font-bold text-gray-900 md:mb-1">${item.brand}</div>
-                            
-                            <div class="hidden md:block text-xs text-gray-400 font-mono mb-3">${item.date}</div>
-                            
-                            <div class="md:hidden text-xs text-gray-400 font-mono">• ${item.date.slice(5)}</div>
-                            
-                            <span class="tag ${tagClass} ml-auto md:ml-0">${item.dim}</span>
+                        <div class="pt-1">
+                            <div class="text-sm font-bold text-gray-900 mb-1">${item.brand}</div>
+                            <div class="text-xs text-gray-400 font-mono mb-3">${item.date}</div>
+                            <span class="tag ${tagClass}">${item.dim}</span>
                         </div>
                         
                         <div>
                             <h3 class="text-lg md:text-xl font-bold text-gray-900 leading-tight mb-3 group-hover:text-blue-600 transition-colors cursor-pointer">${item.fact}</h3>
-                            
                             <div class="text-sm md:text-[15px] text-gray-600 leading-relaxed text-justify font-light">
                                 ${item.analysis}
                             </div>
-
                             ${linkHtml}
                         </div>
                     `;
