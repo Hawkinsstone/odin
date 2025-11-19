@@ -3,378 +3,217 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>竞品追踪周报 | 欧帝科技</title>
+    <title>Competitor Intelligence | Odin</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     
     <style>
         body { 
-            font-family: 'Noto Sans SC', system-ui, -apple-system, sans-serif; 
-            background-color: #f0f2f5; /* 浅灰背景，衬托毛玻璃 */
-            color: #334155; 
-            -webkit-font-smoothing: antialiased;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        /* 顶部导航毛玻璃 */
-        .glass-nav {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
+            font-family: 'Inter', 'Noto Sans SC', sans-serif; 
+            background-color: #ffffff; 
+            color: #1a1a1a; 
+            -webkit-font-smoothing: antialiased; 
         }
 
-        /* 卡片通用样式 (无毛玻璃，白色背景更清晰) */
-        .card-base {
-            background: #ffffff;
-            border-radius: 1rem; /* 16px */
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            transition: all 0.3s ease;
-        }
-        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 15px 30px rgba(0,0,0,0.08); }
-
-        /* 区域容器毛玻璃 (用于包裹图表区和筛选区) */
-        .glass-wrapper {
-            background: rgba(255, 255, 255, 0.4);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            border-radius: 1.5rem;
-            padding: 1rem;
-        }
-
-        /* 下拉框样式 */
-        .custom-select-wrapper { position: relative; flex-shrink: 0; }
-        .custom-select {
-            appearance: none;
-            -webkit-appearance: none;
-            background-color: #ffffff;
-            border: 1px solid #e2e8f0;
-            padding: 8px 32px 8px 14px;
-            border-radius: 9999px;
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: #475569;
+        /* 顶部导航 Tab */
+        .nav-tab {
+            font-size: 0.9rem;
+            color: #888;
             cursor: pointer;
-            transition: all 0.2s;
-            line-height: 1.5;
+            transition: color 0.2s;
             white-space: nowrap;
+            padding: 4px 0;
+            margin-right: 24px;
         }
-        .custom-select:hover { border-color: #cbd5e1; background-color: #f8fafc; }
-        .custom-select:focus { outline: none; border-color: #5470C6; box-shadow: 0 0 0 3px rgba(84, 112, 198, 0.1); }
-        
-        .select-arrow { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #94a3b8; }
+        .nav-tab:hover { color: #000; }
+        .nav-tab.active { color: #000; font-weight: 600; border-bottom: 2px solid #000; }
 
+        /* 下拉框 */
+        .minimal-select {
+            appearance: none;
+            background: transparent;
+            font-size: 13px;
+            color: #666;
+            font-weight: 500;
+            cursor: pointer;
+            padding-right: 16px;
+        }
+        .minimal-select:hover { color: #000; }
+
+        /* 博客流布局 */
+        .feed-item {
+            display: grid;
+            grid-template-columns: 140px 1fr; /* 左侧元数据，右侧正文 */
+            gap: 32px;
+            padding: 40px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .feed-item:last-child { border-bottom: none; }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .feed-item { grid-template-columns: 1fr; gap: 12px; padding: 32px 0; }
+        }
+
+        /* 标签 */
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            font-size: 11px;
+            font-weight: 500;
+            border-radius: 4px;
+            background: #f7f7f7;
+            color: #666;
+        }
+
+        #loading { position: fixed; inset: 0; background:white; z-index: 50; display: flex; justify-content: center; align-items: center; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        .tag-base { font-size: 0.75rem; padding: 2px 8px; border-radius: 6px; font-weight: 600; letter-spacing: 0.02em; white-space: nowrap; }
-        /* 标签也配合新色系 */
-        .tag-strategy { background-color: #eefbfd; color: #5470C6; border: 1px solid #bfdbfe; } 
-        .tag-product { background-color: #f0fdf4; color: #91CC75; border: 1px solid #bbf7d0; } 
-        .tag-market { background-color: #fffcf0; color: #FAC858; border: 1px solid #fde68a; } 
-        .brand-badge { font-weight: 600; border-radius: 6px; padding: 3px 10px; font-size: 0.75rem; display: inline-flex; align-items: center; white-space: nowrap; }
-
-        #loading { position: fixed; inset: 0; background:#f8fafc; display:flex; justify-content:center; align-items:center; z-index:100; }
-        .loader { width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #5470C6; border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="antialiased pb-10">
+<body class="flex flex-col min-h-screen">
 
-    <div id="loading">
-        <div class="flex flex-col items-center gap-3">
-            <div class="loader"></div>
-            <div class="text-slate-400 text-sm font-medium animate-pulse">Loading Data...</div>
-        </div>
-    </div>
+    <div id="loading"><div class="w-5 h-5 border-2 border-gray-200 border-t-black rounded-full animate-spin"></div></div>
 
-    <header class="glass-nav sticky top-0 z-50 w-full">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-3 sm:gap-4">
-                <img src="./logo.png" alt="欧帝科技" class="h-6 sm:h-7 w-auto object-contain opacity-95">
-                <div class="h-4 w-[1.5px] bg-slate-300 rotate-12 hidden sm:block"></div>
-                <div class="flex items-baseline gap-2 sm:gap-3">
-                    <h1 class="text-base sm:text-lg font-bold text-slate-800 tracking-tight">竞品追踪周报</h1>
-                    <span id="dateRange" class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white text-slate-500 border border-slate-200 shadow-sm">--/--</span>
-                </div>
+    <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100">
+        <div class="max-w-3xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3 flex-shrink-0 mr-8">
+                <img src="./logo.png" class="h-5 w-auto grayscale opacity-90">
+                <div class="h-4 w-px bg-gray-200 hidden sm:block"></div>
             </div>
-            <div class="flex items-center">
-                <div class="flex items-center gap-2 bg-white/80 border border-slate-200 px-2 sm:px-3 py-1 rounded-full shadow-sm backdrop-blur-sm">
-                    <span class="relative flex h-2 w-2">
-                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                      <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                    </span>
-                    <span class="text-xs font-medium text-slate-500 hidden sm:inline" id="updateTime">同步中</span>
+
+            <div class="flex-1 overflow-x-auto no-scrollbar flex items-center h-16" id="topBrandNav">
+                </div>
+
+            <div class="flex-shrink-0 flex items-center gap-4">
+                <div class="relative group">
+                    <select id="weekFilter" onchange="renderFeed()" class="minimal-select">
+                        <option value="all">All Time</option>
+                    </select>
+                    <svg class="w-3 h-3 absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-black pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </div>
             </div>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+    <main class="flex-1 w-full max-w-3xl mx-auto px-6 py-8">
         
-        <div class="glass-wrapper mb-6 sm:mb-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                <div class="card-base p-4 sm:p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                            <div class="w-1.5 h-4 rounded-full bg-[#5470C6]"></div>
-                            声量分布
-                        </h3>
-                    </div>
-                    <div class="h-48 sm:h-56"><canvas id="brandChart"></canvas></div>
-                </div>
-                <div class="card-base p-4 sm:p-6 relative">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                            <div class="w-1.5 h-4 rounded-full bg-[#91CC75]"></div>
-                            维度占比
-                        </h3>
-                    </div>
-                    <div class="h-48 sm:h-56 relative flex items-center justify-center">
-                        <canvas id="dimensionChart"></canvas>
-                        <div id="dimensionCenterText" class="absolute text-center text-slate-600 pointer-events-none"></div>
-                    </div>
-                </div>
-            </div>
+        <div class="mb-12 pt-4">
+            <h1 class="text-3xl font-bold text-gray-900 tracking-tight mb-2" id="pageTitle">Latest Updates</h1>
+            <p class="text-gray-500 text-sm" id="subtitle">Tracking competitive movements across the market.</p>
         </div>
 
-        <div class="glass-wrapper mb-6 sm:mb-8 sticky top-16 sm:top-20 z-40 p-2 sm:p-3 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
-            
-            <div class="flex items-center gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar px-1 pb-1 sm:pb-0">
-                <div class="flex items-center text-slate-400 mr-1 flex-shrink-0">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
-                </div>
-                <div class="custom-select-wrapper">
-                    <select id="weekFilter" onchange="renderCards()" class="custom-select pr-8 sm:pr-10"><option value="all">📅 周期</option></select>
-                    <svg class="select-arrow w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                </div>
-                <div class="custom-select-wrapper">
-                    <select id="brandFilter" onchange="renderCards()" class="custom-select pr-8 sm:pr-10"><option value="all">🏢 品牌</option></select>
-                    <svg class="select-arrow w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                </div>
-                <div class="custom-select-wrapper">
-                    <select id="typeFilter" onchange="renderCards()" class="custom-select pr-8 sm:pr-10">
-                        <option value="all">🎯 维度</option>
-                        <option value="产品与技术">产品与技术</option>
-                        <option value="市场与营销">市场与营销</option>
-                        <option value="公司与战略">公司与战略</option>
-                    </select>
-                    <svg class="select-arrow w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                </div>
+        <div id="contentFeed">
             </div>
-            
-            <div class="flex items-center gap-2 px-4 w-full sm:w-auto justify-end border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 h-auto sm:h-6">
-                <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Total</span>
-                <span id="countDisplay" class="text-base sm:text-lg font-bold text-slate-800 font-mono">0</span>
-            </div>
-        </div>
 
-        <div id="contentFeed" class="space-y-6 sm:space-y-8"></div>
-
-        <footer class="mt-12 sm:mt-20 pb-4 sm:pb-8 text-center">
-            <div class="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white border border-slate-200 shadow-sm">
-                <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
-                <p class="text-[10px] sm:text-xs text-slate-400 font-medium">Internal Use Only · 欧帝科技市场部</p>
-            </div>
+        <footer class="mt-20 pt-10 border-t border-gray-100 text-center pb-10">
+            <p class="text-xs text-gray-400 font-mono">INTERNAL USE ONLY · ODIN INTELLIGENCE</p>
         </footer>
+
     </main>
 
     <script>
-        Chart.register(ChartDataLabels);
         const GOOGLE_SHEET_CSV_URL = "./data.csv"; 
-        
-        // 🎨 核心配色：AntV / ECharts 经典色盘 (参照上传的图片风格)
-        const CUSTOM_COLORS = [
-            '#5470C6', // 深蓝
-            '#91CC75', // 草绿
-            '#FAC858', // 明黄
-            '#EE6666', // 珊瑚红
-            '#73C0DE', // 天蓝
-            '#3BA272', // 深绿
-            '#FC8452', // 橙色
-            '#9A60B4', // 紫色
-            '#EA7CCC'  // 粉色
-        ];
-
-        function getColor(index) { return CUSTOM_COLORS[index % CUSTOM_COLORS.length]; }
-
         let rawData = [];
+        let currentBrandFilter = 'all';
 
         function loadData() {
             Papa.parse(GOOGLE_SHEET_CSV_URL, {
-                download: true,
-                header: true,
-                skipEmptyLines: true,
-                complete: function(results) {
-                    rawData = results.data.map(row => ({
-                        week: row['周期'] || row['Week'] || '未知',
-                        date: row['日期'] || row['Date'] || '',
-                        brand: row['竞品品牌'] || row['Brand'] || '其他',
-                        dim: row['追踪维度（单选）'] || row['Dimension'] || '其他',
-                        fact: row['事实描述'] || row['Fact'] || '无描述',
-                        analysis: row['分析'] || row['Analysis'] || '',
-                        link: row['信息源'] || row['Link'] || ''
-                    })).filter(item => item.brand && item.fact);
+                download: true, header: true, skipEmptyLines: true,
+                complete: (res) => {
+                    rawData = res.data.map(r => ({
+                        week: r['周期']||r['Week']||'', date: r['日期']||'', brand: r['竞品品牌']||'', 
+                        dim: r['追踪维度（单选）']||'', fact: r['事实描述']||'', analysis: r['分析']||'', link: r['信息源']||''
+                    })).filter(i => i.brand && i.fact);
                     initApp();
-                },
-                error: function(err) { console.error(err); }
+                }
             });
         }
 
         function initApp() {
             document.getElementById('loading').style.display = 'none';
-            document.getElementById('updateTime').textContent = "Updated: " + new Date().toLocaleDateString(undefined, {month:'short', day:'numeric'});
+            
+            // 1. 生成顶部品牌 Tab
+            const brands = ['All', ...new Set(rawData.map(i => i.brand))];
+            const navContainer = document.getElementById('topBrandNav');
+            
+            brands.forEach((brand, index) => {
+                const div = document.createElement('div');
+                div.className = `nav-tab ${index === 0 ? 'active' : ''}`;
+                div.textContent = brand;
+                div.onclick = function() {
+                    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    currentBrandFilter = brand === 'All' ? 'all' : brand;
+                    
+                    // 更新大标题
+                    document.getElementById('pageTitle').textContent = brand === 'All' ? 'Latest Updates' : `${brand} Updates`;
+                    renderFeed();
+                };
+                navContainer.appendChild(div);
+            });
+
+            // 2. 生成周期下拉框
             const weeks = [...new Set(rawData.map(i => i.week))].sort().reverse();
-            const brands = [...new Set(rawData.map(i => i.brand))];
-            const wSelect = document.getElementById('weekFilter');
-            weeks.forEach(w => wSelect.add(new Option(w, w)));
-            const bSelect = document.getElementById('brandFilter');
-            brands.forEach(b => bSelect.add(new Option(b, b)));
-            if(weeks.length > 0) document.getElementById('dateRange').textContent = `${weeks[weeks.length-1]} ~ ${weeks[0]}`;
-            renderCharts();
-            renderCards();
+            weeks.forEach(w => document.getElementById('weekFilter').add(new Option(w, w)));
+
+            renderFeed();
         }
 
-        function renderCharts() {
-            const brandCounts = {};
-            rawData.forEach(i => brandCounts[i.brand] = (brandCounts[i.brand] || 0) + 1);
-            const dimCounts = {};
-            rawData.forEach(i => dimCounts[i.dim] = (dimCounts[i.dim] || 0) + 1);
-
-            // 1. 声量分布：多色柱状图
-            const brandColors = Object.keys(brandCounts).map((_, i) => getColor(i));
-            new Chart(document.getElementById('brandChart'), {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(brandCounts),
-                    datasets: [{
-                        data: Object.values(brandCounts),
-                        backgroundColor: brandColors,
-                        borderRadius: 4,
-                        barThickness: window.innerWidth < 640 ? 16 : 28
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, datalabels: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: '#f1f5f9' }, border: { display: false }, ticks: { font: { size: 10 } } },
-                        x: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 10 } } }
-                    }
-                }
-            });
-
-            // 2. 维度占比：多色甜甜圈 + 百分比标签
-            const dimColors = Object.keys(dimCounts).map((_, i) => getColor(i + 3)); // 颜色偏移
-            const total = Object.values(dimCounts).reduce((a, b) => a + b, 0);
+        function renderFeed() {
+            const wVal = document.getElementById('weekFilter').value;
+            const filtered = rawData.filter(item => 
+                (currentBrandFilter === 'all' || item.brand === currentBrandFilter) &&
+                (wVal === 'all' || item.week === wVal)
+            );
             
-            const dimCtx = document.getElementById('dimensionChart');
-            if (window.dimChart) window.dimChart.destroy();
-            
-            window.dimChart = new Chart(dimCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(dimCounts),
-                    datasets: [{
-                        data: Object.values(dimCounts),
-                        backgroundColor: dimColors,
-                        borderWidth: 0,
-                        hoverOffset: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '65%',
-                    plugins: { 
-                        legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 8, font: { size: 11 } } },
-                        datalabels: {
-                            color: '#fff',
-                            font: { weight: 'bold', size: 10 },
-                            formatter: (value) => Math.round(value / total * 100) + '%'
-                        }
-                    },
-                    onHover: (e, els) => {
-                        const center = document.getElementById('dimensionCenterText');
-                        if(els.length) {
-                            const i = els[0].index;
-                            const label = window.dimChart.data.labels[i];
-                            const val = window.dimChart.data.datasets[0].data[i];
-                            center.innerHTML = `<div class="text-xs text-slate-500">${label}</div><div class="text-xl font-bold text-slate-800">${Math.round(val/total*100)}%</div>`;
-                        } else {
-                            center.innerHTML = `<div class="text-xs text-slate-500">总计</div><div class="text-xl font-bold text-slate-800">${total}</div>`;
-                        }
-                    }
-                }
-            });
-            document.getElementById('dimensionCenterText').innerHTML = `<div class="text-xs text-slate-500">总计</div><div class="text-xl font-bold text-slate-800">${total}</div>`;
-        }
-
-        function renderCards() {
-            const weekVal = document.getElementById('weekFilter').value;
-            const brandVal = document.getElementById('brandFilter').value;
-            const typeVal = document.getElementById('typeFilter').value;
+            document.getElementById('subtitle').textContent = `${filtered.length} posts found`;
             const container = document.getElementById('contentFeed');
             container.innerHTML = '';
 
-            const filtered = rawData.filter(item => 
-                (weekVal === 'all' || item.week === weekVal) &&
-                (brandVal === 'all' || item.brand === brandVal) &&
-                (typeVal === 'all' || item.dim === typeVal)
-            );
-
-            document.getElementById('countDisplay').textContent = filtered.length;
+            // 按周分组
             const groups = filtered.reduce((acc, curr) => { (acc[curr.week] = acc[curr.week] || []).push(curr); return acc; }, {});
             
             Object.keys(groups).sort().reverse().forEach(week => {
+                // 周标题 (作为分隔符)
                 const header = document.createElement('div');
-                header.className = "flex items-center space-x-3 mt-6 mb-4";
-                header.innerHTML = `<span class="bg-slate-800 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm">${week}</span><div class="h-px bg-slate-300 flex-grow"></div>`;
+                header.className = "sticky top-16 z-30 bg-white/95 py-4 mt-8 mb-2 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-widest backdrop-blur";
+                header.textContent = week;
                 container.appendChild(header);
 
-                const grid = document.createElement('div');
-                grid.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
                 groups[week].forEach(item => {
-                    let brandStyle = 'bg-slate-50 text-slate-600 border-slate-200';
-                    // 品牌标签根据名称匹配色系
-                    if(['华为','新华三'].some(k=>item.brand.includes(k))) brandStyle = 'bg-red-50 text-red-600 border-red-100';
-                    if(['腾讯','浪潮'].some(k=>item.brand.includes(k))) brandStyle = 'bg-blue-50 text-blue-600 border-blue-100';
-                    if(['阿里','金智'].some(k=>item.brand.includes(k))) brandStyle = 'bg-orange-50 text-orange-600 border-orange-100';
+                    const linkHtml = item.link ? 
+                        `<a href="${item.link}" target="_blank" class="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline decoration-1 underline-offset-4 mt-3">
+                            Read Source <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                         </a>` : '';
 
-                    let dimClass = 'tag-market';
-                    if(item.dim.includes('战略')) dimClass = 'tag-strategy';
-                    if(item.dim.includes('产品')) dimClass = 'tag-product';
-
-                    const linkHtml = item.link ? `<a href="${item.link}" target="_blank" class="inline-flex items-center text-xs font-semibold text-blue-600 hover:text-blue-800 mt-4 pt-4 border-t border-slate-100 w-full">阅读详情 &rarr;</a>` : '';
-
-                    const card = document.createElement('div');
-                    card.className = "card-base p-5 card-hover flex flex-col h-full";
-                    card.innerHTML = `
-                        <div class="flex justify-between items-start mb-3">
-                            <span class="brand-badge border ${brandStyle}">${item.brand}</span>
-                            <span class="tag-base ${dimClass}">${item.dim}</span>
+                    const div = document.createElement('div');
+                    div.className = "feed-item group";
+                    div.innerHTML = `
+                        <div class="pt-1">
+                            <div class="text-sm font-semibold text-gray-900 mb-1">${item.brand}</div>
+                            <div class="text-xs text-gray-400 font-mono mb-3">${item.date}</div>
+                            <span class="tag">${item.dim}</span>
                         </div>
-                        <h4 class="text-[15px] font-bold text-slate-800 leading-snug mb-3 line-clamp-2" title="${item.fact}">${item.fact}</h4>
-                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 mb-auto">
-                            <p class="text-xs text-slate-500 text-justify leading-relaxed">${item.analysis}</p>
+                        
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900 leading-snug mb-3 group-hover:text-blue-600 transition-colors cursor-pointer">${item.fact}</h3>
+                            
+                            <div class="text-[15px] text-gray-600 leading-relaxed text-justify">
+                                ${item.analysis}
+                            </div>
+
+                            ${linkHtml}
                         </div>
-                        ${linkHtml}
-                        <div class="mt-3 text-[10px] text-slate-400 text-right">${item.date}</div>
                     `;
-                    grid.appendChild(card);
+                    container.appendChild(div);
                 });
-                container.appendChild(grid);
             });
         }
+
         loadData();
     </script>
 </body>
