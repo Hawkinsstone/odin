@@ -20,14 +20,14 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* === 第一排：品牌导航 (Tab) === */
+        /* === 顶部品牌导航 (Tab) === */
         .nav-tab {
             font-size: 0.9rem; 
             color: #888;
             cursor: pointer;
             transition: all 0.2s;
             padding: 4px 0;
-            margin: 0 16px;
+            margin: 0 12px;
             font-weight: 500;
             position: relative;
             white-space: nowrap;
@@ -35,39 +35,43 @@
         }
         .nav-tab:hover { color: #000; }
         .nav-tab.active { color: #000; font-weight: 600; }
+        /* 品牌选中下划线 */
         .nav-tab.active::after {
             content: '';
             position: absolute;
-            bottom: -18px;
+            bottom: -20px; /* 贴合 Header 底部 */
             left: 0;
             width: 100%;
             height: 2px;
             background-color: #000;
         }
 
-        /* === 第二排：周期导航 (Tag Style) === */
-        .week-tab {
+        /* === 时间轴滑动条 (Timeline) === */
+        .timeline-item {
             font-size: 0.75rem; /* 12px */
-            padding: 4px 12px;
-            border-radius: 6px;
-            background-color: #f3f4f6;
-            color: #6b7280;
-            font-weight: 500;
+            color: #9ca3af; /* 浅灰 */
             cursor: pointer;
+            padding: 6px 16px;
+            border-radius: 99px;
             transition: all 0.2s;
             white-space: nowrap;
-            flex-shrink: 0;
-            border: 1px solid transparent;
+            font-family: 'Inter', monospace; /* 数字用等宽字体更好看 */
+            letter-spacing: 0.05em;
+            position: relative;
         }
-        .week-tab:hover { 
-            background-color: #e5e7eb; 
-            color: #374151; 
+        .timeline-item:hover { color: #374151; }
+        
+        /* 时间轴选中态 */
+        .timeline-item.active {
+            color: #000;
+            font-weight: 700;
+            background-color: #f3f4f6;
         }
-        .week-tab.active {
-            background-color: #eff6ff; /* 选中蓝底 */
-            color: #1d4ed8;        /* 选中蓝字 */
-            border-color: #bfdbfe;
-            font-weight: 600;
+        /* 选中项前面的小圆点装饰 */
+        .timeline-item.active::before {
+            content: '•';
+            margin-right: 6px;
+            color: #2563eb; /* 蓝色圆点 */
         }
 
         /* === 列表布局 === */
@@ -82,17 +86,17 @@
 
         /* === 手机端适配 === */
         @media (max-width: 768px) {
-            /* 隐藏左侧 Logo 区域占位，让导航靠左 */
             .logo-area { display: none; } 
-            /* 导航左对齐 */
-            .nav-center-layout { justify-content: flex-start; }
-            /* 导航项间距调整 */
-            .nav-tab { margin: 0 20px 0 0; font-size: 1rem; }
-            .nav-tab.active::after { bottom: -10px; }
-            /* 列表垂直堆叠 */
+            .spacer-area { display: none; }
+            .nav-center-layout { justify-content: flex-start; padding-left: 16px; }
+            .nav-tab { font-size: 1rem; margin-right: 24px; }
+            .nav-tab.active::after { bottom: -12px; }
+            
+            /* 列表变为垂直 */
             .feed-item { grid-template-columns: 1fr; gap: 12px; padding: 24px 0; }
-            /* 顶部内边距 */
-            .header-inner { padding: 0 16px; }
+            
+            /* 时间轴调整 */
+            .timeline-container { padding-left: 16px; padding-right: 16px; }
         }
 
         /* 标签颜色 */
@@ -121,24 +125,24 @@
 
     <div id="loading"><div class="w-5 h-5 border-2 border-gray-100 border-t-black rounded-full animate-spin"></div></div>
 
-    <div class="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100 shadow-[0_2px_15px_rgba(0,0,0,0.02)]">
+    <div class="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100">
         
-        <div class="h-14 border-b border-gray-50">
-            <div class="max-w-4xl mx-auto h-full px-6 flex items-center justify-between nav-center-layout relative header-inner">
+        <div class="h-16 border-b border-gray-50">
+            <div class="max-w-4xl mx-auto h-full flex items-center justify-between relative">
                 
-                <div class="logo-area w-32 flex-shrink-0 flex items-center">
+                <div class="logo-area w-[180px] flex-shrink-0 flex items-center pl-6">
                     <img src="./logo.png" class="h-6 w-auto object-contain">
                 </div>
 
-                <div class="flex-1 flex justify-center overflow-x-auto hide-scroll h-full items-center px-8" id="topBrandNav">
+                <div class="flex-1 flex justify-center overflow-x-auto hide-scroll h-full items-center nav-center-layout" id="topBrandNav">
                     </div>
 
-                <div class="logo-area w-32 flex-shrink-0"></div>
+                <div class="spacer-area w-[180px] flex-shrink-0"></div>
             </div>
         </div>
 
-        <div class="h-12 bg-white/80">
-            <div class="max-w-4xl mx-auto h-full px-6 flex items-center overflow-x-auto hide-scroll gap-2 header-inner" id="weekNavContainer">
+        <div class="h-12 bg-white">
+            <div class="max-w-4xl mx-auto h-full flex items-center overflow-x-auto hide-scroll timeline-container" id="timelineContainer">
                 </div>
         </div>
     </div>
@@ -173,7 +177,7 @@
         function initApp() {
             document.getElementById('loading').style.display = 'none';
             
-            // 1. 第一排：品牌导航
+            // 1. 品牌导航
             const brands = ['All', ...new Set(rawData.map(i => i.brand))];
             const navContainer = document.getElementById('topBrandNav');
             
@@ -192,24 +196,32 @@
                 navContainer.appendChild(div);
             });
 
-            // 2. 第二排：周期导航
+            // 2. 时间轴滑动条
             const weeks = [...new Set(rawData.map(i => i.week))].sort().reverse();
-            const weekContainer = document.getElementById('weekNavContainer');
+            const tlContainer = document.getElementById('timelineContainer');
 
-            addWeekButton(weekContainer, '全部周期', 'all', true);
+            // "All Time" 按钮
+            addTimelineItem(tlContainer, 'All Time', 'all', true);
+            
+            // 增加一个分隔竖线
+            const divider = document.createElement('div');
+            divider.className = "h-4 w-px bg-gray-200 mx-2 flex-shrink-0";
+            tlContainer.appendChild(divider);
+
+            // 周次按钮
             weeks.forEach(week => {
-                addWeekButton(weekContainer, week, week, false);
+                addTimelineItem(tlContainer, week, week, false);
             });
 
             renderFeed();
         }
 
-        function addWeekButton(container, text, value, isActive) {
+        function addTimelineItem(container, text, value, isActive) {
             const btn = document.createElement('div');
-            btn.className = `week-tab ${isActive ? 'active' : ''}`;
+            btn.className = `timeline-item ${isActive ? 'active' : ''}`;
             btn.textContent = text;
             btn.onclick = function(e) {
-                document.querySelectorAll('.week-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.timeline-item').forEach(t => t.classList.remove('active'));
                 this.classList.add('active');
                 e.target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
                 currentWeekFilter = value;
@@ -236,7 +248,8 @@
             const groups = filtered.reduce((acc, curr) => { (acc[curr.week] = acc[curr.week] || []).push(curr); return acc; }, {});
             
             Object.keys(groups).sort().reverse().forEach((week, idx) => {
-                // 如果筛选了全部周期，显示分割线
+                // 逻辑：如果选了具体某一周，就不显示标题分割线了，直接展示内容（更沉浸）
+                // 如果选了 All Time，则显示周标题分割线
                 if (currentWeekFilter === 'all') {
                     const header = document.createElement('div');
                     header.className = `py-3 mb-4 border-b border-gray-100 text-[11px] font-bold text-gray-400 uppercase tracking-widest ${idx > 0 ? 'mt-12' : 'mt-6'}`;
@@ -244,7 +257,7 @@
                     container.appendChild(header);
                 } else if (idx === 0) {
                      const spacer = document.createElement('div');
-                     spacer.className = "mt-6";
+                     spacer.className = "mt-8";
                      container.appendChild(spacer);
                 }
 
