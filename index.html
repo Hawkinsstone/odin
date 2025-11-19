@@ -1,88 +1,133 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<header class="bg-white shadow-sm sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <div class="flex items-center">
-            <img src="https://odin.png" alt="欧帝 Logo" class="h-8 w-auto mr-3"> 
-            <h1 class="text-xl font-bold text-gray-900">竞品追踪周报 <span id="dateRange" class="text-sm font-normal text-gray-500 ml-2"></span></h1>
-        </div>
-        <div class="text-sm text-gray-500" id="updateTime"></div>
-    </div>
-</header>
-<body class="text-gray-800">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>竞品追踪周报 | 欧帝科技</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    
+    <style>
+        body { 
+            font-family: 'Noto Sans SC', system-ui, -apple-system, sans-serif; 
+            background-color: #f1f5f9; /* Slate-100 */
+            color: #334155; 
+        }
+        .glass-header {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+        
+        /* 标签颜色定义 */
+        .tag-strategy { background-color: #eff6ff; color: #1d4ed8; border: 1px solid #dbeafe; } /* 蓝 */
+        .tag-product { background-color: #f0fdf4; color: #15803d; border: 1px solid #dcfce7; } /* 绿 */
+        .tag-market { background-color: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; } /* 橙-接近欧帝色 */
+        
+        .brand-badge { font-weight: 600; border-radius: 6px; padding: 2px 8px; font-size: 0.75rem; letter-spacing: 0.025em; }
+        
+        #loading { position: fixed; top:0; left:0; width:100%; height:100%; background:#f8fafc; display:flex; justify-content:center; align-items:center; z-index:100; }
+        .loader { border: 3px solid #e2e8f0; border-top: 3px solid #f97316; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="antialiased">
 
     <div id="loading">
-        <div class="text-center">
-            <div class="text-2xl font-bold text-blue-600 mb-2">正在加载最新数据...</div>
-            <div class="text-gray-500 text-sm">正在同步在线表格</div>
+        <div class="flex flex-col items-center">
+            <div class="loader mb-4"></div>
+            <div class="text-slate-500 text-sm font-medium">正在同步最新情报...</div>
         </div>
     </div>
 
-    <header class="bg-white shadow-sm sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <header class="glass-header sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between" style="height: 72px;">
             <div class="flex items-center">
-                <div class="bg-blue-600 text-white font-bold p-2 rounded mr-3">CI</div>
-                <h1 class="text-xl font-bold text-gray-900">竞品追踪周报 <span id="dateRange" class="text-sm font-normal text-gray-500 ml-2"></span></h1>
+                <img src="./logo.png" alt="欧帝科技" class="h-10 w-auto mr-4 object-contain">
+                
+                <div class="h-6 w-px bg-slate-300 mx-2"></div>
+                
+                <h1 class="text-xl font-bold text-slate-800 ml-2 tracking-tight">
+                    竞品追踪周报 
+                    <span id="dateRange" class="text-sm font-normal text-slate-500 ml-2 bg-slate-100 px-2 py-1 rounded-md"></span>
+                </h1>
             </div>
-            <div class="text-sm text-gray-500" id="updateTime"></div>
+            <div class="text-xs text-slate-400 bg-slate-50 px-3 py-1 rounded-full border border-slate-100 hidden sm:block" id="updateTime">
+                Waiting for data...
+            </div>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div class="bg-white p-6 rounded-lg shadow">
-                <h3 class="text-lg font-semibold mb-4 text-gray-700 border-l-4 border-blue-500 pl-3">品牌活跃度</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <h3 class="text-base font-bold text-slate-700 mb-6 flex items-center">
+                    <span class="w-1 h-4 bg-blue-500 rounded-full mr-2"></span>
+                    品牌活跃度 (声量)
+                </h3>
                 <div class="h-64"><canvas id="brandChart"></canvas></div>
             </div>
-            <div class="bg-white p-6 rounded-lg shadow">
-                <h3 class="text-lg font-semibold mb-4 text-gray-700 border-l-4 border-green-500 pl-3">追踪维度分布</h3>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <h3 class="text-base font-bold text-slate-700 mb-6 flex items-center">
+                    <span class="w-1 h-4 bg-orange-500 rounded-full mr-2"></span>
+                    战略维度分布
+                </h3>
                 <div class="h-64"><canvas id="dimensionChart"></canvas></div>
             </div>
         </div>
 
-        <div class="bg-white p-4 rounded-lg shadow mb-6 flex flex-wrap gap-4 items-center sticky top-16 z-40 border-t border-gray-100">
-            <span class="font-semibold text-gray-700">筛选:</span>
-            <select id="weekFilter" onchange="renderCards()" class="border p-2 rounded text-sm"><option value="all">所有周期</option></select>
-            <select id="brandFilter" onchange="renderCards()" class="border p-2 rounded text-sm"><option value="all">所有品牌</option></select>
-            <select id="typeFilter" onchange="renderCards()" class="border p-2 rounded text-sm">
-                <option value="all">所有维度</option>
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 mb-8 flex flex-wrap gap-3 items-center sticky top-20 z-40">
+            <div class="flex items-center space-x-2 text-sm text-slate-600 mr-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                <span class="font-bold">筛选视图</span>
+            </div>
+            
+            <select id="weekFilter" onchange="renderCards()" class="form-select bg-slate-50 border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 p-2.5 outline-none border hover:bg-white transition-colors cursor-pointer"><option value="all">📅 所有周期</option></select>
+            <select id="brandFilter" onchange="renderCards()" class="form-select bg-slate-50 border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 p-2.5 outline-none border hover:bg-white transition-colors cursor-pointer"><option value="all">🏢 所有品牌</option></select>
+            <select id="typeFilter" onchange="renderCards()" class="form-select bg-slate-50 border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 p-2.5 outline-none border hover:bg-white transition-colors cursor-pointer">
+                <option value="all">🎯 所有维度</option>
                 <option value="产品与技术">产品与技术</option>
                 <option value="市场与营销">市场与营销</option>
                 <option value="公司与战略">公司与战略</option>
             </select>
-            <div class="ml-auto text-sm text-gray-500">共 <span id="countDisplay" class="font-bold text-blue-600">0</span> 条情报</div>
+            
+            <div class="ml-auto text-sm text-slate-400 bg-slate-50 px-3 py-1 rounded-md">
+                共找到 <span id="countDisplay" class="font-bold text-orange-600 text-base">0</span> 条情报
+            </div>
         </div>
 
-        <div id="contentFeed" class="grid grid-cols-1 gap-6"></div>
+        <div id="contentFeed" class="space-y-10"></div>
+
+        <footer class="mt-16 pt-8 border-t border-slate-200 text-center">
+            <p class="text-slate-400 text-sm">© 2025 欧帝科技 · 市场洞察部 | 数据仅供内部参考</p>
+        </footer>
     </main>
 
     <script>
         // ==========================================
-        // 🔴 配置区域：请把这里换成你的 Google Sheet CSV 链接 🔴
+        // 🔴 数据源配置: 指向本地 CSV 🔴
         // ==========================================
-        const GOOGLE_SHEET_CSV_URL = "./data.csv";
-        // 示例链接格式类似: https://docs.google.com/spreadsheets/d/e/2PACX-xxxx/pub?output=csv
-        // 如果你先想测试效果，可以暂时保留空，我会加载默认演示数据
+        const GOOGLE_SHEET_CSV_URL = "./data.csv"; 
         // ==========================================
 
         let rawData = [];
 
-        // 1. 数据加载与映射
+        // 加载数据
         function loadData() {
-            if (!GOOGLE_SHEET_CSV_URL || GOOGLE_SHEET_CSV_URL.includes("填在这里")) {
-                // 如果没有填链接，使用演示数据（这里为了代码简洁，不重复放演示数据，直接提示用户）
-                alert("请在 HTML 代码第 66 行填入您的 Google Sheet CSV 链接！\n目前将加载空状态。");
-                document.getElementById('loading').style.display = 'none';
-                return;
-            }
-
             Papa.parse(GOOGLE_SHEET_CSV_URL, {
                 download: true,
                 header: true,
                 skipEmptyLines: true,
                 complete: function(results) {
-                    // 数据映射：把中文表头转为代码需要的英文 Key
                     rawData = results.data.map(row => ({
                         week: row['周期'] || row['Week'] || '未知',
                         date: row['日期'] || row['Date'] || '',
@@ -91,23 +136,27 @@
                         fact: row['事实描述'] || row['Fact'] || '无描述',
                         analysis: row['分析'] || row['Analysis'] || '',
                         link: row['信息源'] || row['Link'] || ''
-                    })).filter(item => item.brand && item.fact); // 过滤掉无效行
+                    })).filter(item => item.brand && item.fact);
 
                     initApp();
                 },
                 error: function(err) {
-                    alert("数据加载失败，请检查链接是否正确或网络是否通畅。");
+                    document.getElementById('loading').innerHTML = 
+                        `<div class="text-center text-red-500 p-4 bg-white rounded-lg shadow">
+                            <p class="font-bold text-lg mb-2">加载失败</p>
+                            <p class="text-sm">无法读取 data.csv 文件，请检查文件是否已上传至 GitHub。</p>
+                        </div>`;
                     console.error(err);
                 }
             });
         }
 
-        // 2. 初始化应用
+        // 初始化
         function initApp() {
+            document.getElementById('loading').classList.add('hidden');
             document.getElementById('loading').style.display = 'none';
-            document.getElementById('updateTime').textContent = "数据更新至: " + new Date().toLocaleDateString();
+            document.getElementById('updateTime').textContent = "更新时间: " + new Date().toLocaleDateString();
 
-            // 填充筛选器
             const weeks = [...new Set(rawData.map(i => i.week))].sort().reverse();
             const brands = [...new Set(rawData.map(i => i.brand))];
             
@@ -117,37 +166,66 @@
             const bSelect = document.getElementById('brandFilter');
             brands.forEach(b => bSelect.add(new Option(b, b)));
 
+            if(weeks.length > 0) document.getElementById('dateRange').textContent = `${weeks[weeks.length-1]} - ${weeks[0]}`;
+
             renderCharts();
             renderCards();
         }
 
-        // 3. 渲染图表 (与之前逻辑相同)
+        // 渲染图表
         function renderCharts() {
             const brandCounts = {};
             rawData.forEach(i => brandCounts[i.brand] = (brandCounts[i.brand] || 0) + 1);
             const dimCounts = {};
             rawData.forEach(i => dimCounts[i.dim] = (dimCounts[i.dim] || 0) + 1);
 
+            // 品牌图表
             new Chart(document.getElementById('brandChart'), {
                 type: 'bar',
                 data: {
                     labels: Object.keys(brandCounts),
-                    datasets: [{ label: '提及次数', data: Object.values(brandCounts), backgroundColor: '#3b82f6', borderRadius: 4 }]
+                    datasets: [{
+                        label: '情报数量',
+                        data: Object.values(brandCounts),
+                        backgroundColor: 'rgba(59, 130, 246, 0.8)', // Blue-500
+                        hoverBackgroundColor: 'rgba(59, 130, 246, 1)',
+                        borderRadius: 6,
+                        barPercentage: 0.6
+                    }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { borderDash: [2, 4], color: '#f1f5f9' } },
+                        x: { grid: { display: false } }
+                    }
+                }
             });
 
+            // 维度图表
             new Chart(document.getElementById('dimensionChart'), {
                 type: 'doughnut',
                 data: {
                     labels: Object.keys(dimCounts),
-                    datasets: [{ data: Object.values(dimCounts), backgroundColor: ['#dcfce7', '#ffedd5', '#e0e7ff'], borderWidth: 0 }]
+                    datasets: [{
+                        data: Object.values(dimCounts),
+                        backgroundColor: ['#4ade80', '#f97316', '#60a5fa'], // Green, Orange(Odin), Blue
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: { legend: { position: 'right', labels: { usePointStyle: true, padding: 20 } } }
+                }
             });
         }
 
-        // 4. 渲染卡片 (与之前逻辑相同)
+        // 渲染卡片
         function renderCards() {
             const weekVal = document.getElementById('weekFilter').value;
             const brandVal = document.getElementById('brandFilter').value;
@@ -163,33 +241,64 @@
 
             document.getElementById('countDisplay').textContent = filtered.length;
 
-            // 分组逻辑
             const groups = filtered.reduce((acc, curr) => { (acc[curr.week] = acc[curr.week] || []).push(curr); return acc; }, {});
+            
             Object.keys(groups).sort().reverse().forEach(week => {
+                // 周次分割线
                 const header = document.createElement('div');
-                header.className = "flex items-center space-x-2 mt-4 mb-2";
-                header.innerHTML = `<span class="bg-gray-800 text-white px-3 py-1 rounded-full text-sm font-bold">${week}</span><div class="h-px bg-gray-300 flex-grow"></div>`;
+                header.className = "flex items-center space-x-4 mt-8 mb-4";
+                header.innerHTML = `
+                    <div class="bg-slate-800 text-white px-4 py-1.5 rounded-lg text-sm font-bold tracking-wide shadow-sm">${week}</div>
+                    <div class="h-px bg-slate-200 flex-grow"></div>
+                `;
                 container.appendChild(header);
 
                 const grid = document.createElement('div');
                 grid.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
+                
                 groups[week].forEach(item => {
-                    let brandColor = 'bg-gray-100 text-gray-600';
-                    if(['华为','新华三'].some(k=>item.brand.includes(k))) brandColor = 'bg-red-50 text-red-600';
-                    else if(['腾讯','浪潮'].some(k=>item.brand.includes(k))) brandColor = 'bg-blue-50 text-blue-600';
-                    else if(['阿里','金智'].some(k=>item.brand.includes(k))) brandColor = 'bg-orange-50 text-orange-600';
+                    // 品牌徽标样式
+                    let brandStyle = 'bg-slate-100 text-slate-600 border border-slate-200';
+                    if(['华为','新华三'].some(k=>item.brand.includes(k))) brandStyle = 'bg-red-50 text-red-700 border border-red-100';
+                    if(['腾讯','浪潮'].some(k=>item.brand.includes(k))) brandStyle = 'bg-blue-50 text-blue-700 border border-blue-100';
+                    if(['阿里','金智'].some(k=>item.brand.includes(k))) brandStyle = 'bg-orange-50 text-orange-700 border border-orange-100';
+                    if(['字节','联想'].some(k=>item.brand.includes(k))) brandStyle = 'bg-teal-50 text-teal-700 border border-teal-100';
+
+                    // 维度标签样式
+                    let dimClass = 'tag-market';
+                    if(item.dim.includes('战略')) dimClass = 'tag-strategy';
+                    if(item.dim.includes('产品')) dimClass = 'tag-product';
                     
-                    let dimClass = item.dim.includes('战略') ? 'tag-strategy' : (item.dim.includes('产品') ? 'tag-product' : 'tag-market');
-                    
-                    const linkHtml = item.link ? `<a href="${item.link}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm font-medium mt-auto pt-4 flex items-center">查看详情 &rarr;</a>` : '';
+                    const linkHtml = item.link ? 
+                        `<a href="${item.link}" target="_blank" class="group flex items-center text-sm font-medium text-blue-600 hover:text-orange-500 transition-colors mt-auto pt-4">
+                            查看详情 
+                            <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                         </a>` : 
+                        `<span class="text-slate-300 text-sm mt-auto pt-4 cursor-not-allowed flex items-center">暂无链接</span>`;
 
                     const card = document.createElement('div');
-                    card.className = "bg-white rounded-lg shadow p-5 flex flex-col card-hover border border-gray-100";
+                    card.className = "bg-white rounded-xl p-6 flex flex-col card-hover border border-slate-100 shadow-sm h-full";
                     card.innerHTML = `
-                        <div class="flex justify-between mb-3"><span class="brand-badge ${brandColor}">${item.brand}</span><span class="text-xs px-2 py-1 rounded ${dimClass}">${item.dim}</span></div>
-                        <h4 class="font-bold text-gray-900 mb-2 line-clamp-2">${item.fact}</h4>
-                        <div class="bg-gray-50 p-3 rounded text-sm text-gray-600 mb-2"><span class="font-bold">分析:</span> ${item.analysis}</div>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="brand-badge ${brandStyle}">${item.brand}</span>
+                            <span class="text-xs font-medium px-2.5 py-1 rounded-full ${dimClass}">${item.dim}</span>
+                        </div>
+                        <h4 class="text-base font-bold text-slate-800 mb-3 leading-snug line-clamp-2" title="${item.fact}">${item.fact}</h4>
+                        
+                        <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-100 mb-4">
+                            <div class="text-xs font-bold text-slate-400 uppercase mb-1 tracking-wider">Analysis</div>
+                            <div class="text-sm text-slate-600 leading-relaxed text-justify">${item.analysis}</div>
+                        </div>
+
                         ${linkHtml}
+
+                        <div class="mt-4 pt-3 border-t border-slate-50 flex justify-between items-center text-xs text-slate-400">
+                            <div class="flex items-center">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                ${item.date}
+                            </div>
+                            <span>来源: 公开网络</span>
+                        </div>
                     `;
                     grid.appendChild(card);
                 });
@@ -197,7 +306,7 @@
             });
         }
 
-        // 启动加载
+        // 启动
         loadData();
     </script>
 </body>
